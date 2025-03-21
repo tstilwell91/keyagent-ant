@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}AntID Tutor - Identification Results{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white">
+                <h2 class="mb-0">Identification Results</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-5">
+                        <img src="{{ url_for('uploaded_file', filename=results.filename) }}" alt="Uploaded ant image" class="img-fluid rounded shadow-sm mb-3">
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('identify') }}" class="btn btn-outline-primary">Identify Another</a>
+                            <a href="{{ url_for('map_view') }}" class="btn btn-outline-info">Add to Species Map</a>
+                            <a href="{{ url_for('arcgis_map') }}" class="btn btn-outline-secondary">View Distribution Map</a>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <h3 class="mb-3">{{ results.common_name }}</h3>
+                        <h5 class="text-muted mb-4"><em>{{ results.species_name }}</em></h5>
+                        
+                        <div class="progress mb-3 progress-height">
+                            {% set confidence_percent = results.confidence * 100 %}
+                            <div id="confidenceBar" class="progress-bar bg-success" role="progressbar" 
+                                 data-confidence="{{ confidence_percent }}"
+                                 aria-valuenow="{{ confidence_percent }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                {{ confidence_percent|round(1) }}% Confidence
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h5>Description</h5>
+                            <p>{{ results.description }}</p>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h5>Habitat</h5>
+                                <p>{{ results.habitat }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Distribution</h5>
+                                <p>{{ results.distribution }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h5>Key Facts</h5>
+                            <ul class="list-group">
+                                {% for fact in results.facts %}
+                                <li class="list-group-item">{{ fact }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow">
+            <div class="card-header">
+                <h3 class="mb-0">Have Questions?</h3>
+            </div>
+            <div class="card-body">
+                <p>Want to learn more about this species or have specific questions?</p>
+                <form id="quickChatForm" class="mb-3">
+                    <div class="input-group">
+                        <input type="text" id="quickQuestion" class="form-control" placeholder="Ask about {{ results.common_name }}..." value="Tell me more about {{ results.common_name }} behavior">
+                        <button class="btn btn-primary" type="submit">Ask</button>
+                    </div>
+                </form>
+                <div id="quickResponse" class="p-3 bg-light rounded d-none">
+                    <div class="spinner-border text-primary d-none" role="status" id="loadingSpinner">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div id="responseText"></div>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('chat') }}" class="btn btn-outline-secondary">Continue to Full Chat</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set progress bar width
+        var confidenceBar = document.getElementById('confidenceBar');
+        var confidenceValue = confidenceBar.getAttribute('data-confidence');
+        confidenceBar.style.width = confidenceValue + '%';
+        
+        document.getElementById('quickChatForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            var question = document.getElementById('quickQuestion').value;
+            var responseDiv = document.getElementById('quickResponse');
+            var spinner = document.getElementById('loadingSpinner');
+            var responseText = document.getElementById('responseText');
+            
+            responseDiv.classList.remove('d-none');
+            spinner.classList.remove('d-none');
+            responseText.innerHTML = '';
+            
+            fetch("{{ url_for('chat') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    'message': question
+                })
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                spinner.classList.add('d-none');
+                responseText.innerHTML = data.response;
+            })
+            .catch(function(error) {
+                spinner.classList.add('d-none');
+                responseText.innerHTML = 'Sorry, there was an error processing your request.';
+                console.error('Error:', error);
+            });
+        });
+    });
+</script>
+{% endblock %}

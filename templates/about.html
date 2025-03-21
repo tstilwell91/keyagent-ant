@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}AntID Tutor - About{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-dark text-white">
+                <h2 class="mb-0">About AntID Tutor</h2>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center mb-4">
+                    <div class="col-md-4 text-center mb-3 mb-md-0">
+                        <img src="{{ url_for('static', filename='images/logo-large.png') }}" alt="AntID Tutor Logo" class="img-fluid rounded-circle shadow" style="max-width: 200px;">
+                    </div>
+                    <div class="col-md-8">
+                        <p class="lead">
+                            AntID Tutor is an educational platform that combines artificial intelligence and computer vision to help students identify ant species and learn about myrmecology.
+                        </p>
+                        <p>
+                            Our mission is to make ant identification and learning accessible to everyone, from curious beginners to advanced biology students and researchers.
+                        </p>
+                    </div>
+                </div>
+                
+                <h3 class="border-bottom pb-2 mb-3">Our Technology</h3>
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h4 class="card-title">Convolutional Neural Network</h4>
+                                <p class="card-text">
+                                    Our species identification system uses a deep learning CNN model trained on thousands of ant images. The model analyzes visual patterns to identify ant species with high accuracy.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h4 class="card-title">GPT-based Tutor</h4>
+                                <p class="card-text">
+                                    AntTutor uses advanced natural language processing to provide detailed, educational responses to your questions about ants, their behavior, ecology, and more.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h4 class="card-title">ArcGIS Mapping</h4>
+                                <p class="card-text">
+                                    Our interactive species distribution map uses ArcGIS technology to visualize ant species distribution and allow users to contribute their own observations.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h4 class="card-title">Interactive Learning</h4>
+                                <p class="card-text">
+                                    Dynamic quizzes and educational content help reinforce learning and test your knowledge of ant species, behavior, and ecology.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 class="border-bottom pb-2 mb-3">Educational Purpose</h3>
+                <p>
+                    AntID Tutor is designed for educational purposes to help students:
+                </p>
+                <ul class="mb-4">
+                    <li>Learn to identify common ant species</li>
+                    <li>Understand ant morphology, behavior, and ecology</li>
+                    <li>Explore the geographic distribution of different ant species</li>
+                    <li>Contribute to citizen science through observation reporting</li>
+                    <li>Develop a deeper appreciation for these important insects</li>
+                </ul>
+                
+                <div class="alert alert-info">
+                    <h4 class="alert-heading">Disclaimer</h4>
+                    <p class="mb-0">
+                        While our identification system is highly accurate, it should be used for educational purposes only. For scientific research or pest management decisions, please consult with professional myrmecologists or entomologists.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow">
+            <div class="card-header">
+                <h3 class="mb-0">Contact Us</h3>
+            </div>
+            <div class="card-body">
+                <p>
+                    Have questions, suggestions, or feedback? We'd love to hear from you!
+                </p>
+                <form>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message</label>
+                        <textarea class="form-control" id="message" rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

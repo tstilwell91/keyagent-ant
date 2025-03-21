@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}AntID Tutor - Interactive Quiz{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h2 class="mb-0">Ant Species Quiz</h2>
+            </div>
+            <div class="card-body">
+                <div id="quizIntro">
+                    <p class="lead mb-4">Test your knowledge of ant species, behavior, and ecology with this interactive quiz. Answer the questions to see how much you've learned!</p>
+                    
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="bi bi-info-circle-fill fs-4"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="alert-heading">Quiz Instructions</h5>
+                                <p class="mb-0">Select the best answer for each question. You'll receive immediate feedback after each answer. At the end, you'll see your total score and have the option to retake the quiz or explore more learning resources.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button id="startQuiz" class="btn btn-warning btn-lg">Start Quiz</button>
+                    </div>
+                </div>
+                
+                <div id="quizContainer" class="d-none">
+                    <div class="progress mb-4">
+                        <div id="quizProgress" class="progress-bar bg-warning" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                    </div>
+                    
+                    <div id="questionContainer">
+                        <!-- Questions will be dynamically inserted here -->
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <button id="prevQuestion" class="btn btn-outline-secondary" disabled>Previous</button>
+                        <button id="nextQuestion" class="btn btn-warning">Next</button>
+                    </div>
+                </div>
+                
+                <div id="quizResults" class="d-none text-center">
+                    <div class="mb-4">
+                        <i class="bi bi-award fs-1 text-warning"></i>
+                    </div>
+                    <h3 class="mb-3">Quiz Completed!</h3>
+                    <p class="lead mb-3">Your Score: <span id="scoreDisplay">0/0</span></p>
+                    <div id="scoreMessage" class="alert alert-success mb-4"></div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <button id="retakeQuiz" class="btn btn-warning">Retake Quiz</button>
+                        <a href="{{ url_for('chat') }}" class="btn btn-outline-primary">Ask AntTutor</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4 shadow-sm">
+            <div class="card-header">
+                <h3 class="mb-0">Learning Resources</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Ant Morphology Guide</h5>
+                                <p class="card-text">Learn about the different body parts of ants and how to identify species based on physical characteristics.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Ant Behavior Study</h5>
+                                <p class="card-text">Explore the fascinating behaviors of different ant species, from foraging to nest building.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get quiz data from the server
+        const quizQuestions = {{ questions|tojson }};
+        
+        // Quiz elements
+        const quizIntro = document.getElementById('quizIntro');
+        const quizContainer = document.getElementById('quizContainer');
+        const questionContainer = document.getElementById('questionContainer');
+        const quizProgress = document.getElementById('quizProgress');
+        const prevButton = document.getElementById('prevQuestion');
+        const nextButton = document.getElementById('nextQuestion');
+        const quizResults = document.getElementById('quizResults');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const scoreMessage = document.getElementById('scoreMessage');
+        
+        // Quiz state
+        let currentQuestion = 0;
+        let score = 0;
+        let userAnswers = [];
+        
+        // Initialize quiz
+        document.getElementById('startQuiz').addEventListener('click', function() {
+            quizIntro.classList.add('d-none');
+            quizContainer.classList.remove('d-none');
+            showQuestion(0);
+        });
+        
+        // Retake quiz
+        document.getElementById('retakeQuiz').addEventListener('click', function() {
+            currentQuestion = 0;
+            score = 0;
+            userAnswers = [];
+            quizResults.classList.add('d-none');
+            quizContainer.classList.remove('d-none');
+            showQuestion(0);
+        });
+        
+        // Show a specific question
+        function showQuestion(index) {
+            // Update progress
+            const progress = ((index + 1) / quizQuestions.length) * 100;
+            quizProgress.style.width = `${progress}%`;
+            quizProgress.textContent = `${Math.round(progress)}%`;
+            quizProgress.setAttribute('aria-valuenow', progress);
+            
+            // Enable/disable navigation buttons
+            prevButton.disabled = index === 0;
+            nextButton.textContent = index === quizQuestions.length - 1 ? 'Finish' : 'Next';
+            
+            // Get the current question
+            const question = quizQuestions[index];
+            
+            // Create question HTML
+            let questionHTML = `
+                <div class="mb-4">
+                    <h4 class="mb-3">Question ${index + 1} of ${quizQuestions.length}</h4>
+                    <p class="lead">${question.question}</p>
+                </div>
+                <div class="list-group mb-4">
+            `;
+            
+            // Add options
+            question.options.forEach((option, optionIndex) => {
+                const isSelected = userAnswers[index] === optionIndex;
+                const isCorrect = optionIndex === question.answer;
+                
+                let optionClass = 'list-group-item list-group-item-action';
+                if (isSelected) {
+                    optionClass += isSelected && isCorrect ? ' list-group-item-success' : ' list-group-item-danger';
+                }
+                
+                questionHTML += `
+                    <button class="${optionClass}" data-index="${optionIndex}">
+                        ${option}
+                        ${isSelected ? (isCorrect ? 
+                            '<span class="float-end text-success"><i class="bi bi-check-circle-fill"></i> Correct</span>' : 
+                            '<span class="float-end text-danger"><i class="bi bi-x-circle-fill"></i> Incorrect</span>') 
+                        : ''}
+                    </button>
+                `;
+            });
+            
+            questionHTML += '</div>';
+            
+            // Add explanation if the user has answered
+            if (userAnswers[index] !== undefined) {
+                const isCorrect = userAnswers[index] === question.answer;
+                const explanation = isCorrect ? 
+                    'Great job! That\'s the correct answer.' : 
+                    `The correct answer is: ${question.options[question.answer]}`;
+                
+                questionHTML += `
+                    <div class="alert ${isCorrect ? 'alert-success' : 'alert-danger'}">
+                        <p class="mb-0">${explanation}</p>
+                    </div>
+                `;
+            }
+            
+            // Update the question container
+            questionContainer.innerHTML = questionHTML;
+            
+            // Add event listeners to options
+            const optionButtons = questionContainer.querySelectorAll('.list-group-item');
+            optionButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    if (userAnswers[index] === undefined) {
+                        const selectedIndex = parseInt(this.getAttribute('data-index'));
+                        userAnswers[index] = selectedIndex;
+                        
+                        // Update score
+                        if (selectedIndex === question.answer) {
+                            score++;
+                        }
+                        
+                        // Refresh the question display
+                        showQuestion(index);
+                    }
+                });
+            });
+            
+            // Update current question index
+            currentQuestion = index;
+        }
+        
+        // Navigation buttons
+        prevButton.addEventListener('click', function() {
+            if (currentQuestion > 0) {
+                showQuestion(currentQuestion - 1);
+            }
+        });
+        
+        nextButton.addEventListener('click', function() {
+            if (userAnswers[currentQuestion] === undefined) {
+                alert('Please select an answer before proceeding.');
+                return;
+            }
+            
+            if (currentQuestion < quizQuestions.length - 1) {
+                showQuestion(currentQuestion + 1);
+            } else {
+                // Show results
+                showResults();
+            }
+        });
+        
+        // Show quiz results
+        function showResults() {
+            quizContainer.classList.add('d-none');
+            quizResults.classList.remove('d-none');
+            
+            // Update score display
+            scoreDisplay.textContent = `${score}/${quizQuestions.length}`;
+            
+            // Calculate percentage
+            const percentage = (score / quizQuestions.length) * 100;
+            
+            // Set message based on score
+            let message;
+            let alertClass;
+            
+            if (percentage >= 90) {
+                message = 'Excellent! You have a great understanding of ant species and behavior!';
+                alertClass = 'alert-success';
+            } else if (percentage >= 70) {
+                message = 'Good job! You have a solid knowledge of ants, but there\'s still more to learn.';
+                alertClass = 'alert-success';
+            } else if (percentage >= 50) {
+                message = 'Not bad! You have some knowledge about ants, but could benefit from more learning.';
+                alertClass = 'alert-warning';
+            } else {
+                message = 'Keep learning! Chat with AntTutor to improve your knowledge of ant species.';
+                alertClass = 'alert-danger';
+            }
+            
+            scoreMessage.textContent = message;
+            scoreMessage.className = `alert ${alertClass} mb-4`;
+        }
+    });
+</script>
+{% endblock %}

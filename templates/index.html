@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}AntID Tutor - Home{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-5">
+    <div class="col-lg-6">
+        <h1 class="display-4 fw-bold mb-4">Discover the World of Ants</h1>
+        <p class="lead mb-4">
+            Welcome to AntID Tutor, your interactive platform for ant species identification and learning.
+            Upload images, chat with our AI tutor, and explore the fascinating world of myrmecology.
+        </p>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+            <a href="{{ url_for('identify') }}" class="btn btn-primary btn-lg px-4 me-md-2">Identify an Ant</a>
+            <a href="{{ url_for('chat') }}" class="btn btn-outline-secondary btn-lg px-4">Chat with AntTutor</a>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <img src="{{ url_for('static', filename='images/hero-image.jpg') }}" class="img-fluid rounded shadow-lg" alt="Ant species collage">
+    </div>
+</div>
+
+<hr class="my-5">
+
+<div class="row g-4 py-3">
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <div class="feature-icon bg-primary bg-gradient text-white rounded-3 mb-3">
+                    <i class="bi bi-camera"></i>
+                </div>
+                <h3 class="card-title">Identify Species</h3>
+                <p class="card-text">Upload images of ants to identify their species using our advanced CNN model trained on thousands of ant specimens.</p>
+                <a href="{{ url_for('identify') }}" class="btn btn-sm btn-outline-primary">Try it now</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <div class="feature-icon bg-success bg-gradient text-white rounded-3 mb-3">
+                    <i class="bi bi-chat-dots"></i>
+                </div>
+                <h3 class="card-title">Interactive Learning</h3>
+                <p class="card-text">Chat with our AI tutor to learn about ant morphology, behavior, ecology, and more in a conversational format.</p>
+                <a href="{{ url_for('chat') }}" class="btn btn-sm btn-outline-success">Start chatting</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <div class="feature-icon bg-info bg-gradient text-white rounded-3 mb-3">
+                    <i class="bi bi-geo-alt"></i>
+                </div>
+                <h3 class="card-title">Species Distribution</h3>
+                <p class="card-text">Explore and contribute to our interactive map of ant species distribution using ArcGIS technology.</p>
+                <a href="{{ url_for('map_view') }}" class="btn btn-sm btn-outline-info">View map</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr class="my-5">
+
+<div class="row align-items-center">
+    <div class="col-lg-6">
+        <h2 class="fw-bold mb-3">Test Your Knowledge</h2>
+        <p class="mb-4">
+            Challenge yourself with our interactive quizzes on ant species, behavior, and ecology.
+            Learn through testing your knowledge and receive immediate feedback.
+        </p>
+        <a href="{{ url_for('quiz') }}" class="btn btn-warning px-4 me-md-2">Take a Quiz</a>
+    </div>
+    <div class="col-lg-6">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h4 class="card-title">Did You Know?</h4>
+                <p class="card-text">Ants have been around for more than 100 million years and can be found on every continent except Antarctica. There are more than 12,000 known species of ants!</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

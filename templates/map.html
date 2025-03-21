@@ -1,0 +1,454 @@
+{% extends "base.html" %}
+
+{% block title %}AntID Tutor - Species Distribution Map{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://js.arcgis.com/4.27/esri/themes/light/main.css">
+<style>
+    #mapView {
+        height: 600px;
+        width: 100%;
+        margin-bottom: 1.5rem;
+    }
+    
+    .map-overlay {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 4px;
+        padding: 10px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        max-width: 300px;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+    
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        margin-right: 10px;
+        border-radius: 50%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white">
+                <h2 class="mb-0">Ant Species Distribution Map</h2>
+            </div>
+            <div class="card-body p-0">
+                <div id="mapView" class="position-relative">
+                    <!-- Map will be rendered here -->
+                    
+                    <div class="map-overlay d-none d-md-block">
+                        <h5>Legend</h5>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #e74c3c;"></div>
+                            <div>Camponotus pennsylvanicus</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #3498db;"></div>
+                            <div>Solenopsis invicta</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #2ecc71;"></div>
+                            <div>Lasius niger</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #f39c12;"></div>
+                            <div>Other species</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header">
+                        <h3 class="mb-0">Add Observation</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="observationForm">
+                            <div class="mb-3">
+                                <label for="species" class="form-label">Species</label>
+                                <select class="form-select" id="species" required>
+                                    <option value="" selected disabled>Select a species</option>
+                                    <option value="Camponotus pennsylvanicus">Camponotus pennsylvanicus (Black Carpenter Ant)</option>
+                                    <option value="Solenopsis invicta">Solenopsis invicta (Red Imported Fire Ant)</option>
+                                    <option value="Lasius niger">Lasius niger (Black Garden Ant)</option>
+                                    <option value="Other">Other (specify in notes)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="latitude" class="form-label">Latitude</label>
+                                    <input type="number" class="form-control" id="latitude" step="0.000001" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="longitude" class="form-label">Longitude</label>
+                                    <input type="number" class="form-control" id="longitude" step="0.000001" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="notes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="notes" rows="3" placeholder="Habitat description, behavior observations, etc."></textarea>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Add Observation</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header">
+                        <h3 class="mb-0">Location Tools</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Search by Address</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="address" placeholder="Enter an address or place name">
+                                <button class="btn btn-outline-secondary" type="button" id="geocodeButton">Search</button>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" id="getCurrentLocation">
+                                <i class="bi bi-geo-alt"></i> Use My Current Location
+                            </button>
+                            <button class="btn btn-outline-secondary" id="dropPin">
+                                <i class="bi bi-pin-map"></i> Drop Pin on Map
+                            </button>
+                        </div>
+                        
+                        <div class="alert alert-info mt-3">
+                            <small>Click on the map to set coordinates or use one of the location tools above.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Observation Added</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Your observation has been successfully added to the map. Thank you for contributing to our ant species distribution data!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://js.arcgis.com/4.27/"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let map, view, graphicsLayer;
+        let isPinDropMode = false;
+        
+        // Initialize ArcGIS map
+        require([
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/Graphic",
+            "esri/layers/GraphicsLayer",
+            "esri/widgets/Search",
+            "esri/widgets/Locate",
+            "esri/geometry/Point"
+        ], function(Map, MapView, Graphic, GraphicsLayer, Search, Locate, Point) {
+            
+            // Create the map
+            map = new Map({
+                basemap: "topo-vector"
+            });
+            
+            // Create the view
+            view = new MapView({
+                container: "mapView",
+                map: map,
+                center: [-98, 39], // Center on United States
+                zoom: 4
+            });
+            
+            // Create a graphics layer for the points
+            graphicsLayer = new GraphicsLayer();
+            map.add(graphicsLayer);
+            
+            // Add search widget
+            const searchWidget = new Search({
+                view: view
+            });
+            view.ui.add(searchWidget, {
+                position: "top-left",
+                index: 0
+            });
+            
+            // Add locate widget
+            const locateWidget = new Locate({
+                view: view
+            });
+            view.ui.add(locateWidget, {
+                position: "top-left",
+                index: 1
+            });
+            
+            // Add some sample data points
+            addSamplePoints();
+            
+            // Handle map clicks for coordinate selection
+            view.on("click", function(event) {
+                if (isPinDropMode) {
+                    // Get the coordinates from the click event
+                    const point = view.toMap(event.screenPoint);
+                    document.getElementById("latitude").value = point.latitude.toFixed(6);
+                    document.getElementById("longitude").value = point.longitude.toFixed(6);
+                    
+                    // Add a temporary marker
+                    addTemporaryMarker(point.longitude, point.latitude);
+                    
+                    // Turn off pin drop mode
+                    isPinDropMode = false;
+                    document.getElementById("dropPin").classList.remove("active");
+                }
+            });
+            
+            // Function to add a temporary marker
+            function addTemporaryMarker(longitude, latitude) {
+                // Clear any existing temporary markers
+                graphicsLayer.graphics.removeMany(
+                    graphicsLayer.graphics.filter(g => g.attributes && g.attributes.type === "temporary")
+                );
+                
+                // Create a point
+                const point = new Point({
+                    longitude: longitude,
+                    latitude: latitude
+                });
+                
+                // Create a marker symbol
+                const markerSymbol = {
+                    type: "simple-marker",
+                    color: [0, 0, 0, 0.5],
+                    size: 12,
+                    outline: {
+                        color: [255, 255, 255],
+                        width: 2
+                    }
+                };
+                
+                // Create a graphic
+                const pointGraphic = new Graphic({
+                    geometry: point,
+                    symbol: markerSymbol,
+                    attributes: {
+                        type: "temporary"
+                    }
+                });
+                
+                // Add the graphic to the layer
+                graphicsLayer.add(pointGraphic);
+            }
+            
+            // Function to add an observation point
+            window.addObservationPoint = function(longitude, latitude, species, notes) {
+                // Create a point
+                const point = new Point({
+                    longitude: longitude,
+                    latitude: latitude
+                });
+                
+                // Determine color based on species
+                let color;
+                switch(species) {
+                    case "Camponotus pennsylvanicus":
+                        color = [231, 76, 60]; // Red
+                        break;
+                    case "Solenopsis invicta":
+                        color = [52, 152, 219]; // Blue
+                        break;
+                    case "Lasius niger":
+                        color = [46, 204, 113]; // Green
+                        break;
+                    default:
+                        color = [243, 156, 18]; // Orange
+                }
+                
+                // Create a marker symbol
+                const markerSymbol = {
+                    type: "simple-marker",
+                    color: color,
+                    size: 10,
+                    outline: {
+                        color: [255, 255, 255],
+                        width: 1
+                    }
+                };
+                
+                // Create a graphic
+                const pointGraphic = new Graphic({
+                    geometry: point,
+                    symbol: markerSymbol,
+                    attributes: {
+                        species: species,
+                        notes: notes,
+                        type: "observation"
+                    },
+                    popupTemplate: {
+                        title: species,
+                        content: [
+                            {
+                                type: "fields",
+                                fieldInfos: [
+                                    {
+                                        fieldName: "species",
+                                        label: "Species"
+                                    },
+                                    {
+                                        fieldName: "notes",
+                                        label: "Notes"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                });
+                
+                // Add the graphic to the layer
+                graphicsLayer.add(pointGraphic);
+            };
+            
+            // Function to add sample data points
+            function addSamplePoints() {
+                // Sample data points
+                const samplePoints = [
+                    { lon: -75.1652, lat: 39.9526, species: "Camponotus pennsylvanicus", notes: "Found in urban park" },
+                    { lon: -84.3880, lat: 33.7490, species: "Solenopsis invicta", notes: "Common in this region" },
+                    { lon: -118.2437, lat: 34.0522, species: "Lasius niger", notes: "Found in garden area" },
+                    { lon: -87.6298, lat: 41.8781, species: "Camponotus pennsylvanicus", notes: "Nesting in dead tree" },
+                    { lon: -80.1918, lat: 25.7617, species: "Solenopsis invicta", notes: "Multiple colonies observed" }
+                ];
+                
+                // Add each point to the map
+                samplePoints.forEach(point => {
+                    window.addObservationPoint(point.lon, point.lat, point.species, point.notes);
+                });
+            }
+            
+            // Geocode address
+            document.getElementById("geocodeButton").addEventListener("click", function() {
+                const address = document.getElementById("address").value;
+                
+                if (address) {
+                    searchWidget.search(address)
+                        .then(function(result) {
+                            // Result processing is handled by the search widget
+                        })
+                        .catch(function(error) {
+                            console.error("Geocoding error:", error);
+                            alert("Could not find the specified address. Please try again.");
+                        });
+                }
+            });
+            
+            // Get current location
+            document.getElementById("getCurrentLocation").addEventListener("click", function() {
+                locateWidget.locate();
+                
+                // The locate widget will automatically zoom to the user's location
+                // We need to get the coordinates after the locate operation completes
+                locateWidget.on("locate", function(event) {
+                    if (event.position) {
+                        document.getElementById("latitude").value = event.position.coords.latitude.toFixed(6);
+                        document.getElementById("longitude").value = event.position.coords.longitude.toFixed(6);
+                    }
+                });
+            });
+        });
+        
+        // Toggle pin drop mode
+        document.getElementById("dropPin").addEventListener("click", function() {
+            isPinDropMode = !isPinDropMode;
+            this.classList.toggle("active");
+            
+            if (isPinDropMode) {
+                alert("Click on the map to set the location for your observation.");
+            }
+        });
+        
+        // Handle form submission
+        document.getElementById("observationForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            
+            const species = document.getElementById("species").value;
+            const latitude = parseFloat(document.getElementById("latitude").value);
+            const longitude = parseFloat(document.getElementById("longitude").value);
+            const notes = document.getElementById("notes").value;
+            
+            if (species && !isNaN(latitude) && !isNaN(longitude)) {
+                // Add the observation to the map
+                window.addObservationPoint(longitude, latitude, species, notes);
+                
+                // Send the data to the server
+                fetch("{{ url_for('add_observation') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        species: species,
+                        latitude: latitude,
+                        longitude: longitude,
+                        notes: notes
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success modal
+                        const successModal = new bootstrap.Modal(document.getElementById("successModal"));
+                        successModal.show();
+                        
+                        // Reset form
+                        document.getElementById("observationForm").reset();
+                    } else {
+                        alert("Error: " + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("There was an error adding your observation. Please try again.");
+                });
+            } else {
+                alert("Please fill in all required fields with valid values.");
+            }
+        });
+    });
+</script>
+{% endblock %}

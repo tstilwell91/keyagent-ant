@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}AntID Tutor - Chat with AntTutor{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        height: 70vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+    }
+    
+    .message {
+        margin-bottom: 1rem;
+        padding: 0.75rem 1rem;
+        border-radius: 1rem;
+        max-width: 80%;
+    }
+    
+    .user-message {
+        background-color: #007bff;
+        color: white;
+        margin-left: auto;
+        border-bottom-right-radius: 0.25rem;
+    }
+    
+    .bot-message {
+        background-color: #e9ecef;
+        color: #212529;
+        margin-right: auto;
+        border-bottom-left-radius: 0.25rem;
+    }
+    
+    .message-time {
+        font-size: 0.75rem;
+        opacity: 0.8;
+        margin-top: 0.25rem;
+    }
+    
+    .typing-indicator {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        background-color: #e9ecef;
+        border-radius: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #adb5bd;
+        animation: typing 1.5s infinite ease-in-out;
+        margin-right: 2px;
+    }
+    
+    .dot:nth-child(1) { animation-delay: 0s; }
+    .dot:nth-child(2) { animation-delay: 0.3s; }
+    .dot:nth-child(3) { animation-delay: 0.6s; }
+    
+    @keyframes typing {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+    
+    .suggested-questions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .suggested-question {
+        background-color: #e9ecef;
+        border: none;
+        border-radius: 1rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .suggested-question:hover {
+        background-color: #dee2e6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">Chat with AntTutor</h2>
+                    <small>Your AI myrmecology expert</small>
+                </div>
+                <button id="clearChat" class="btn btn-sm btn-outline-light">Clear Chat</button>
+            </div>
+            <div class="card-body p-0">
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message bot-message">
+                            <div class="message-content">
+                                Hello! I'm AntTutor, your AI myrmecology expert. I can help you learn about ant species, behavior, ecology, and more. What would you like to know about ants today?
+                            </div>
+                            <div class="message-time">Today, just now</div>
+                        </div>
+                        <div class="suggested-questions">
+                            <button class="suggested-question">What makes ants social insects?</button>
+                            <button class="suggested-question">How many ant species exist?</button>
+                            <button class="suggested-question">Tell me about ant colony structure</button>
+                            <button class="suggested-question">How do ants communicate?</button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-3 border-top">
+                        <form id="chatForm">
+                            <div class="input-group">
+                                <input type="text" id="userMessage" class="form-control" placeholder="Type your question here..." required>
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="bi bi-send"></i> Send
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4 shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">Learning Resources</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="bi bi-journal-text fs-2 text-primary"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0">Glossary</h6>
+                                <small>Ant terminology</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="bi bi-diagram-3 fs-2 text-success"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0">Taxonomy</h6>
+                                <small>Classification system</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="bi bi-book fs-2 text-info"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0">References</h6>
+                                <small>Scientific literature</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatMessages = document.getElementById('chatMessages');
+        const chatForm = document.getElementById('chatForm');
+        const userMessageInput = document.getElementById('userMessage');
+        const clearChatButton = document.getElementById('clearChat');
+        const suggestedQuestions = document.querySelectorAll('.suggested-question');
+        
+        // Function to add a message to the chat
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(isUser ? 'user-message' : 'bot-message');
+            
+            const messageContent = document.createElement('div');
+            messageContent.classList.add('message-content');
+            messageContent.textContent = content;
+            
+            const messageTime = document.createElement('div');
+            messageTime.classList.add('message-time');
+            
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            messageTime.textContent = `Today, ${hours}:${minutes}`;
+            
+            messageDiv.appendChild(messageContent);
+            messageDiv.appendChild(messageTime);
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Function to show typing indicator
+        function showTypingIndicator() {
+            const indicator = document.createElement('div');
+            indicator.classList.add('typing-indicator');
+            indicator.id = 'typingIndicator';
+            
+            for (let i = 0; i < 3; i++) {
+                const dot = document.createElement('span');
+                dot.classList.add('dot');
+                indicator.appendChild(dot);
+            }
+            
+            chatMessages.appendChild(indicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Function to remove typing indicator
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+        
+        // Handle form submission
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const userMessage = userMessageInput.value.trim();
+            
+            if (userMessage) {
+                // Add user message to chat
+                addMessage(userMessage, true);
+                
+                // Clear input
+                userMessageInput.value = '';
+                
+                // Show typing indicator
+                showTypingIndicator();
+                
+                // Send message to server
+                fetch("{{ url_for('chat') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'message': userMessage
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Remove typing indicator
+                    removeTypingIndicator();
+                    
+                    // Add bot response to chat
+                    addMessage(data.response);
+                })
+                .catch(error => {
+                    // Remove typing indicator
+                    removeTypingIndicator();
+                    
+                    // Add error message
+                    addMessage('Sorry, there was an error processing your request. Please try again.');
+                    console.error('Error:', error);
+                });
+            }
+        });
+        
+        // Handle suggested questions
+        suggestedQuestions.forEach(button => {
+            button.addEventListener('click', function() {
+                userMessageInput.value = this.textContent;
+                chatForm.dispatchEvent(new Event('submit'));
+            });
+        });
+        
+        // Handle clear chat
+        clearChatButton.addEventListener('click', function() {
+            // Clear all messages except the first one (welcome message)
+            while (chatMessages.children.length > 2) {
+                chatMessages.removeChild(chatMessages.lastChild);
+            }
+        });
+    });
+</script>
+{% endblock %}

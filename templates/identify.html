@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}AntID Tutor - Identify Species{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">Identify Ant Species</h2>
+            </div>
+            <div class="card-body">
+                <p class="lead mb-4">
+                    Upload a clear image of an ant to identify its species. For best results:
+                </p>
+                <ul class="mb-4">
+                    <li>Use a well-lit, in-focus image</li>
+                    <li>Try to capture the entire ant in the frame</li>
+                    <li>Avoid blurry or distant shots</li>
+                    <li>Include multiple angles if possible</li>
+                </ul>
+                
+                <form action="{{ url_for('identify') }}" method="post" enctype="multipart/form-data" class="mb-3">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Select an image:</label>
+                        <input type="file" class="form-control" id="file" name="file" accept=".jpg,.jpeg,.png" required>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I understand that identifications are provided for educational purposes only
+                            </label>
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">Identify Species</button>
+                    </div>
+                </form>
+                
+                <div class="alert alert-info" role="alert">
+                    <h5 class="alert-heading">About Our Identification System</h5>
+                    <p>Our system uses a convolutional neural network (CNN) trained on thousands of ant images to identify species. While highly accurate, it may occasionally misidentify species with similar appearances.</p>
+                    <p class="mb-0">If you're unsure about an identification, you can always chat with our AI tutor for more information or consult with a professional myrmecologist.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <p>Want to learn more about ant identification?</p>
+            <a href="{{ url_for('chat') }}" class="btn btn-outline-secondary">Chat with AntTutor</a>
+            <a href="{{ url_for('arcgis_map') }}" class="btn btn-outline-info">View Ant Distribution Map</a>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalLabel">Image Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="imagePreview" src="#" alt="Preview" class="img-fluid">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('file').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('imagePreview');
+                img.src = e.target.result;
+                const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+                modal.show();
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+{% endblock %}

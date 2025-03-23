@@ -126,6 +126,34 @@ def get_gpt_response(prompt):
         print(f"Error with OpenAI API: {e}")
         return "I'm sorry, I'm having trouble connecting to my knowledge base right now. Please try again later."
 
+# Generate a response from the local Ollama server with llama3.2 model
+def get_ollama_response(prompt):
+    try:
+        # Ollama API endpoint
+        url = "http://localhost:11434/api/generate"
+        
+        # Prepare the request payload
+        payload = {
+            "model": "llama3.2",
+            "prompt": f"You are an expert myrmecologist (ant scientist) named AntTutor. Provide accurate, educational information about ants in a friendly, engaging manner. Keep responses concise but informative.\n\nUser: {prompt}\n\nAntTutor:",
+            "stream": False
+        }
+        
+        # Send the request to Ollama
+        response = requests.post(url, json=payload)
+        
+        # Check if the request was successful
+        if response.status_code == 200:
+            # Parse the JSON response
+            result = response.json()
+            return result.get("response", "I'm sorry, I couldn't generate a response.")
+        else:
+            print(f"Error with Ollama API: Status code {response.status_code}")
+            return f"I'm sorry, there was an error connecting to my knowledge base. Status code: {response.status_code}"
+    except Exception as e:
+        print(f"Error with Ollama API: {e}")
+        return "I'm sorry, I'm having trouble connecting to my knowledge base right now. Please try again later."
+
 # Routes
 @app.route('/')
 def index():
@@ -198,7 +226,8 @@ def chat():
     if request.method == 'POST':
         user_message = request.form.get('message', '')
         if user_message:
-            response = get_gpt_response(user_message)
+            # Use Ollama instead of OpenAI
+            response = get_ollama_response(user_message)
             return jsonify({'response': response})
     
     return render_template('chat.html')
@@ -250,4 +279,4 @@ def about():
     return render_template('about.html')
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=5002)

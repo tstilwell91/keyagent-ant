@@ -36,11 +36,6 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-# Route for the ArcGIS embedded map page
-@app.route('/arcgis-map')
-def arcgis_map():
-    return render_template('arcgis_map.html')
-
 # Mock ant species database (in a real app, this would come from a database)
 ANT_SPECIES = {
     0: {

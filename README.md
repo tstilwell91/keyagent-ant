@@ -6,7 +6,7 @@ An interactive web application that combines computer vision and natural languag
 
 - **Ant Species Identification**: Upload images to identify ant species using a trained CNN model
 - **Interactive Chatbot**: Get detailed explanations and answers to questions about ants using a GPT-based tutor
-- **Species Distribution Map**: View and contribute to a map of ant species distribution using ArcGIS Online
+- **Species Distribution Map**: (ArcGIS integration temporarily disabled)
 - **Interactive Quizzes**: Test your knowledge with dynamically generated quizzes
 
 ## Setup

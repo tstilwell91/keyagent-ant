@@ -24,7 +24,6 @@ An interactive web application that combines computer vision and language models
   - **OpenAI**: Requires an OpenAI API key
 
 ## Setup
-
 1. Clone this repository:
    ```
    git clone https://github.com/yourusername/ant-id-tutor.git

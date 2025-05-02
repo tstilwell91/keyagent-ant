@@ -1,0 +1,5 @@
+# Testing fine-tuned model with sample image.
+# This is for the ResNet18 fine tuned model. 
+# Model not included in the repo due to poor performance. Reach out to authors for model if you're interested.
+
+crun -p ~/envs/myrmecid python inference.py --image casent0101436_d_1_high.jpg --model best_model.pth --classes classes.json

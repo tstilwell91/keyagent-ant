@@ -70,3 +70,45 @@ Copy the contents of the `models/genus/` folder into the `models/` directory:
 - `classes.json`: List of genus labels (lowercase)
 - `genus_metadata.json`: Descriptions, habitats, and facts per genus
 
+## Testing Inference Locally
+
+To test the trained CNN model on a local system outside the web application, you can run the standalone inference script:
+
+### Steps
+
+1. Navigate to the `inference/genus/` folder:
+   ```bash
+   cd inference/genus
+   ```
+
+2. (Optional) If using a GPU node or container environment on the ODU Wahab cluster, allocate a GPU:
+   ```bash
+   salloc -p gpu --gres gpu:1
+   module load container_env pytorch-gpu/2.5.1
+   ```
+
+3. Run the inference script. The model can be found in the `models/genus/` folder :
+   ```bash
+   crun -p ~/envs/myrmecid python inference.py \
+     --image casent0901862_h_1_med.jpg \
+     --model genus_best_model_full.pth \
+     --classes classes.json
+   ```
+
+### Expected Output
+
+The script will:
+- Load the CNN model
+- Preprocess the image
+- Output the predicted ant genus and confidence score
+
+Example:
+```
+Using device: cuda
+Detected 42 classes.
+Loading model from: genus_best_model_full.pth
+Preprocessing image: casent0901862_h_1_med.jpg
+Predicted genus: polyrhachis (confidence: 1.0000)
+```
+
+Note: You may see a `FutureWarning` from PyTorch regarding `torch.load`. This is expected and safe when using your own model checkpoints.

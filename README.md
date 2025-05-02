@@ -14,25 +14,30 @@ An interactive web application that combines computer vision and language models
 - Python 3.8+
 - PyTorch
 - Flask
-- torchvision
-- `torchvision.models.efficientnet_b4` weights
-- An LLM provider (either [Ollama](https://ollama.com) running locally or OpenAI GPT API access)
+- torchvision (with `efficientnet_b4` weights)
+- An LLM provider:
+  - **Ollama** (default): Must be installed locally. [Download Ollama](https://ollama.com/)
+    - Required model: `llama3.2`
+      ```
+      ollama run llama3.2
+      ```
+  - **OpenAI**: Requires an OpenAI API key
 
 ## Setup
 
 1. Clone this repository:
-   ```bash
+   ```
    git clone https://github.com/yourusername/ant-id-tutor.git
    cd ant-id-tutor
    ```
 
 2. Install dependencies:
-   ```bash
+   ```
    pip install -r requirements.txt
    ```
 
 3. Create a `.env` file in the root directory and configure your API keys and LLM provider:
-   ```dotenv
+   ```
    # LLM Provider: choose "ollama" (default) or "openai"
    LLM_PROVIDER=ollama
 
@@ -44,7 +49,7 @@ An interactive web application that combines computer vision and language models
    ```
 
 4. Start the app:
-   ```bash
+   ```
    python app.py
    ```
 
@@ -59,7 +64,9 @@ An interactive web application that combines computer vision and language models
 
 ## Model Files
 
-Place your model and metadata files in the `models/` directory:
+Copy the contents of the `models/genus/` folder into the `models/` directory:
+
 - `genus_best_model_full.pth`: Trained EfficientNet-B4 model
 - `classes.json`: List of genus labels (lowercase)
 - `genus_metadata.json`: Descriptions, habitats, and facts per genus
+

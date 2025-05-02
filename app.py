@@ -4,7 +4,10 @@ import numpy as np
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session, send_from_directory
 from werkzeug.utils import secure_filename
 from PIL import Image
-import tensorflow as tf
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torchvision import models, transforms
 from dotenv import load_dotenv
 import openai
 import requests
@@ -15,15 +18,22 @@ from datetime import datetime
 # Load environment variables
 load_dotenv()
 
+# Define LLM provider
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama").lower()
+if LLM_PROVIDER not in ["ollama", "openai"]:
+    raise ValueError(f"Unsupported LLM_PROVIDER: '{LLM_PROVIDER}'. Must be 'ollama' or 'openai'.")
+
+# Initialize OpenAI client if needed
+openai.api_key = os.getenv("OPENAI_API_KEY")
+if LLM_PROVIDER == "openai" and not openai.api_key:
+    raise EnvironmentError("OPENAI_API_KEY is not set but LLM_PROVIDER is 'openai'. Please set it in your .env file.")
+
 # Initialize Flask app
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg'}
-
-# Initialize OpenAI client
-openai.api_key = os.getenv('OPENAI_API_KEY')
 
 # Initialize ArcGIS API key
 arcgis_api_key = os.getenv('ARCGIS_API_KEY')
@@ -31,82 +41,60 @@ arcgis_api_key = os.getenv('ARCGIS_API_KEY')
 # Ensure upload directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Add route to serve uploaded files
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-# Mock ant species database (in a real app, this would come from a database)
-ANT_SPECIES = {
-    0: {
-        "name": "Camponotus pennsylvanicus",
-        "common_name": "Black Carpenter Ant",
-        "description": "Large black ants that nest in wood. They are important decomposers in forest ecosystems.",
-        "habitat": "Forests, urban areas, particularly in dead or decaying wood",
-        "distribution": "Eastern North America",
-        "facts": [
-            "Can grow up to 13mm in length",
-            "Do not eat wood but excavate it for nesting",
-            "Have a major and minor worker caste system",
-            "Can live for several years"
-        ]
-    },
-    1: {
-        "name": "Solenopsis invicta",
-        "common_name": "Red Imported Fire Ant",
-        "description": "Aggressive reddish-brown ants known for their painful sting.",
-        "habitat": "Open sunny areas, meadows, agricultural land",
-        "distribution": "Southern United States, originally from South America",
-        "facts": [
-            "Introduced to the US in the 1930s",
-            "Build large mound nests that can damage agricultural equipment",
-            "Have a potent alkaloid venom",
-            "Can survive flooding by forming living rafts"
-        ]
-    },
-    2: {
-        "name": "Lasius niger",
-        "common_name": "Black Garden Ant",
-        "description": "Small black ants commonly found in gardens and homes.",
-        "habitat": "Gardens, meadows, urban areas",
-        "distribution": "Europe, parts of Asia and North America",
-        "facts": [
-            "Form trails to food sources",
-            "Farm aphids for honeydew",
-            "Queens can live for up to 15 years",
-            "Colonies can contain up to 15,000 workers"
-        ]
-    }
-}
-
 # Helper function to check allowed file extensions
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-# Mock CNN model loading (in a real app, you would load a trained model)
+# Load model
 def load_model():
-    # This is a placeholder. In a real app, you would load a trained TensorFlow model
-    print("Loading model...")
-    # Return a mock model that always predicts class 0 (for demonstration purposes)
-    class MockModel:
-        def predict(self, img_array):
-            # Return a mock prediction (always predicts the first class with high confidence)
-            return np.array([[0.9, 0.05, 0.05]])
-    return MockModel()
+    full_model_path = os.path.join("models", "genus_best_model_full.pth")
+    print(f"Loading model from: {full_model_path}")
+    model = torch.load(full_model_path, map_location="cpu", weights_only=False)
+    model.eval()
+    print("Model loaded and set to eval mode.")
+    return model
 
-# Load the model at startup
 model = load_model()
+
+# Load class names
+with open(os.path.join("models", "classes.json")) as f:
+    class_names = json.load(f)
+print(f"Loaded {len(class_names)} class names.")
+
+# Load genus metadata
+with open(os.path.join("models", "genus_metadata.json")) as f:
+    genus_metadata = json.load(f)
 
 # Preprocess image for the model
 def preprocess_image(image_path):
-    img = Image.open(image_path)
-    img = img.resize((224, 224))  # Resize to the input size expected by the model
-    img_array = np.array(img) / 255.0  # Normalize pixel values
-    img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
-    return img_array
+    print(f"Preprocessing image: {image_path}")
+    img = Image.open(image_path).convert("RGB")
+    transform = transforms.Compose([
+        transforms.Resize((256, 256)),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+    return transform(img).unsqueeze(0)
 
-# Generate a response from the GPT model
-def get_gpt_response(prompt):
+# LLM response functions
+def get_ollama_response(prompt):
+    try:
+        url = "http://localhost:11434/api/generate"
+        payload = {
+            "model": "llama3.2",
+            "prompt": f"You are an expert myrmecologist (ant scientist) named AntTutor. Provide accurate, educational information about ants in a friendly, engaging manner. Keep responses concise but informative.\n\nUser: {prompt}\n\nAntTutor:",
+            "stream": False
+        }
+        response = requests.post(url, json=payload)
+        if response.status_code == 200:
+            return response.json().get("response", "I'm sorry, I couldn't generate a response.")
+        return f"Ollama error: status code {response.status_code}"
+    except Exception as e:
+        print(f"Ollama exception: {e}")
+        return "Ollama is unavailable. Please try again later."
+
+def get_openai_response(prompt):
     try:
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -118,102 +106,74 @@ def get_gpt_response(prompt):
         )
         return response.choices[0].message.content
     except Exception as e:
-        print(f"Error with OpenAI API: {e}")
-        return "I'm sorry, I'm having trouble connecting to my knowledge base right now. Please try again later."
-
-# Generate a response from the local Ollama server with llama3.2 model
-def get_ollama_response(prompt):
-    try:
-        # Ollama API endpoint
-        url = "http://localhost:11434/api/generate"
-        
-        # Prepare the request payload
-        payload = {
-            "model": "llama3.2",
-            "prompt": f"You are an expert myrmecologist (ant scientist) named AntTutor. Provide accurate, educational information about ants in a friendly, engaging manner. Keep responses concise but informative.\n\nUser: {prompt}\n\nAntTutor:",
-            "stream": False
-        }
-        
-        # Send the request to Ollama
-        response = requests.post(url, json=payload)
-        
-        # Check if the request was successful
-        if response.status_code == 200:
-            # Parse the JSON response
-            result = response.json()
-            return result.get("response", "I'm sorry, I couldn't generate a response.")
-        else:
-            print(f"Error with Ollama API: Status code {response.status_code}")
-            return f"I'm sorry, there was an error connecting to my knowledge base. Status code: {response.status_code}"
-    except Exception as e:
-        print(f"Error with Ollama API: {e}")
-        return "I'm sorry, I'm having trouble connecting to my knowledge base right now. Please try again later."
+        print(f"OpenAI exception: {e}")
+        return "OpenAI is unavailable. Please try again later."
 
 # Routes
 @app.route('/')
 def index():
     return render_template('index.html')
 
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 @app.route('/identify', methods=['GET', 'POST'])
 def identify():
     if request.method == 'POST':
-        # Check if the post request has the file part
         if 'file' not in request.files:
             flash('No file part')
             return redirect(request.url)
-        
         file = request.files['file']
-        
-        # If user does not select file, browser also submits an empty part without filename
         if file.filename == '':
             flash('No selected file')
             return redirect(request.url)
-        
         if file and allowed_file(file.filename):
-            # Generate a unique filename
             filename = str(uuid.uuid4()) + '.' + file.filename.rsplit('.', 1)[1].lower()
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
-            
-            # Preprocess the image and make a prediction
-            img_array = preprocess_image(filepath)
-            predictions = model.predict(img_array)
-            predicted_class = np.argmax(predictions[0])
-            confidence = float(predictions[0][predicted_class])
-            
-            # Get species information
-            species_info = ANT_SPECIES.get(predicted_class, {
-                "name": "Unknown Species",
-                "common_name": "Could not identify",
-                "description": "The model could not confidently identify this species.",
-                "habitat": "Unknown",
-                "distribution": "Unknown",
-                "facts": ["Try uploading a clearer image", "Make sure the ant is clearly visible"]
-            })
-            
-            # Store the results in session
+
+            print(f"Saved uploaded image to: {filepath}")
+
+            img_tensor = preprocess_image(filepath)
+            with torch.no_grad():
+                logits = model(img_tensor)
+                print(f"Logits: {logits}")
+                probs = F.softmax(logits, dim=1)
+                print(f"Probabilities: {probs}")
+                confidence, idx = probs.max(dim=1)
+                predicted_idx = idx.item()
+                confidence = confidence.item()
+                top_probs, top_idxs = probs[0].topk(3)
+
+            species_name = class_names[predicted_idx]
+            top_predictions = [(class_names[i], round(p.item(), 4)) for i, p in zip(top_idxs, top_probs)]
+            print(f"Predicted class index: {predicted_idx}, name: {species_name}, confidence: {confidence:.4f}")
+
+            warning_message = "" if confidence > 0.8 else "This prediction has low confidence. Consider submitting another image for verification."
+
+            genus_info = genus_metadata.get(species_name.lower(), {})
+
             session['identification_results'] = {
                 'filename': filename,
-                'species_name': species_info['name'],
-                'common_name': species_info['common_name'],
+                'species_name': species_name,
+                'common_name': species_name,
                 'confidence': confidence,
-                'description': species_info['description'],
-                'habitat': species_info['habitat'],
-                'distribution': species_info['distribution'],
-                'facts': species_info['facts']
+                'description': genus_info.get('description', ''),
+                'habitat': genus_info.get('habitat', ''),
+                'distribution': genus_info.get('distribution', ''),
+                'facts': genus_info.get('facts', []),
+                'top_predictions': top_predictions,
+                'confidence_warning': warning_message
             }
-            
             return redirect(url_for('results'))
-    
     return render_template('identify.html')
 
 @app.route('/results')
 def results():
-    # Get results from session
     results = session.get('identification_results', None)
     if not results:
         return redirect(url_for('identify'))
-    
     return render_template('results.html', results=results)
 
 @app.route('/chat', methods=['GET', 'POST'])
@@ -221,10 +181,11 @@ def chat():
     if request.method == 'POST':
         user_message = request.form.get('message', '')
         if user_message:
-            # Use Ollama instead of OpenAI
-            response = get_ollama_response(user_message)
+            if LLM_PROVIDER == "openai":
+                response = get_openai_response(user_message)
+            else:
+                response = get_ollama_response(user_message)
             return jsonify({'response': response})
-    
     return render_template('chat.html')
 
 @app.route('/map')
@@ -238,9 +199,6 @@ def add_observation():
     lng = data.get('longitude')
     species = data.get('species')
     notes = data.get('notes')
-    
-    # In a real application, you would save this to a database
-    # For this demo, we'll just return success
     return jsonify({
         'success': True,
         'message': f'Added observation of {species} at coordinates ({lat}, {lng})'
@@ -248,8 +206,6 @@ def add_observation():
 
 @app.route('/quiz')
 def quiz():
-    # In a real app, you would generate questions from a database
-    # For this demo, we'll use a static set of questions
     questions = [
         {
             "question": "Which ant species is known for its painful sting?",

@@ -7,7 +7,7 @@
     <div class="col-lg-6">
         <h1 class="display-4 fw-bold mb-4">Discover the World of Ants</h1>
         <p class="lead mb-4">
-            Welcome to AntID Tutor, your interactive platform for ant species identification and learning.
+            Welcome to AntID Tutor, your interactive platform for ant genus identification and learning.
             Upload images, chat with our AI tutor, and explore the fascinating world of myrmecology.
         </p>
         <div class="d-grid gap-2 d-md-flex justify-content-md-start">
@@ -16,7 +16,7 @@
         </div>
     </div>
     <div class="col-lg-6">
-        <img src="{{ url_for('static', filename='images/hero-image.jpg') }}" class="img-fluid rounded shadow-lg" alt="Ant species collage">
+        <img src="{{ url_for('static', filename='images/hero-image.jpg') }}" class="img-fluid rounded shadow-lg" alt="Ant genus collage">
     </div>
 </div>
 
@@ -29,8 +29,8 @@
                 <div class="feature-icon bg-primary bg-gradient text-white rounded-3 mb-3">
                     <i class="bi bi-camera"></i>
                 </div>
-                <h3 class="card-title">Identify Species</h3>
-                <p class="card-text">Upload images of ants to identify their species using our advanced CNN model trained on thousands of ant specimens.</p>
+                <h3 class="card-title">Identify Genus</h3>
+                <p class="card-text">Upload images of ants to identify their genus using our advanced CNN model trained on thousands of ant specimens.</p>
                 <a href="{{ url_for('identify') }}" class="btn btn-sm btn-outline-primary">Try it now</a>
             </div>
         </div>
@@ -66,7 +66,7 @@
     <div class="col-lg-6">
         <h2 class="fw-bold mb-3">Test Your Knowledge</h2>
         <p class="mb-4">
-            Challenge yourself with our interactive quizzes on ant species, behavior, and ecology.
+            Challenge yourself with our interactive quizzes on ant genus, behavior, and ecology.
             Learn through testing your knowledge and receive immediate feedback.
         </p>
         <a href="{{ url_for('quiz') }}" class="btn btn-warning px-4 me-md-2">Take a Quiz</a>
@@ -75,7 +75,7 @@
         <div class="card bg-light">
             <div class="card-body">
                 <h4 class="card-title">Did You Know?</h4>
-                <p class="card-text">Ants have been around for more than 100 million years and can be found on every continent except Antarctica. There are more than 12,000 known species of ants!</p>
+                <p class="card-text">Ants have been around for more than 100 million years and can be found on every continent except Antarctica. There are more than 12,000 known genus of ants!</p>
             </div>
         </div>
     </div>

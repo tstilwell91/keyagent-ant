@@ -15,13 +15,12 @@
                         <img src="{{ url_for('uploaded_file', filename=results.filename) }}" alt="Uploaded ant image" class="img-fluid rounded shadow-sm mb-3">
                         <div class="d-grid gap-2">
                             <a href="{{ url_for('identify') }}" class="btn btn-outline-primary">Identify Another</a>
-                            <a href="{{ url_for('map_view') }}" class="btn btn-outline-info">Add to Species Map</a>
                         </div>
                     </div>
                     <div class="col-md-7">
                         <h3 class="mb-3">{{ results.common_name }}</h3>
                         <h5 class="text-muted mb-4"><em>{{ results.species_name }}</em></h5>
-                        
+
                         <div class="progress mb-3 progress-height">
                             {% set confidence_percent = results.confidence * 100 %}
                             <div id="confidenceBar" class="progress-bar bg-success" role="progressbar" 
@@ -32,12 +31,32 @@
                                 {{ confidence_percent|round(1) }}% Confidence
                             </div>
                         </div>
-                        
-                        <div class="mb-4">
+
+                        {% if results.confidence_warning %}
+                        <div class="alert alert-warning mt-3" role="alert">
+                            {{ results.confidence_warning }}
+                        </div>
+                        {% endif %}
+
+                        {% if results.top_predictions %}
+                        <div class="mt-4">
+                            <h5>Top 3 Genus Predictions</h5>
+                            <ul class="list-group">
+                                {% for genus, conf in results.top_predictions %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ genus }}
+                                    <span class="badge bg-secondary rounded-pill">{{ (conf * 100) | round(1) }}%</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-4 mt-4">
                             <h5>Description</h5>
                             <p>{{ results.description }}</p>
                         </div>
-                        
+
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <h5>Habitat</h5>
@@ -48,7 +67,7 @@
                                 <p>{{ results.distribution }}</p>
                             </div>
                         </div>
-                        
+
                         <div class="mb-3">
                             <h5>Key Facts</h5>
                             <ul class="list-group">
@@ -61,7 +80,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="card shadow">
             <div class="card-header">
                 <h3 class="mb-0">Have Questions?</h3>
@@ -70,7 +89,7 @@
                 <p>Want to learn more about this species or have specific questions?</p>
                 <form id="quickChatForm" class="mb-3">
                     <div class="input-group">
-                        <input type="text" id="quickQuestion" class="form-control" placeholder="Ask about {{ results.common_name }}..." value="Tell me more about {{ results.common_name }} behavior">
+                        <input type="text" id="quickQuestion" class="form-control" placeholder="Ask about {{ results.common_name }}..." value="What are some typical behaviors and ecological roles of ants in the {{ results.common_name }} genus?">
                         <button class="btn btn-primary" type="submit">Ask</button>
                     </div>
                 </form>
@@ -96,19 +115,19 @@
         var confidenceBar = document.getElementById('confidenceBar');
         var confidenceValue = confidenceBar.getAttribute('data-confidence');
         confidenceBar.style.width = confidenceValue + '%';
-        
+
         document.getElementById('quickChatForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
             var question = document.getElementById('quickQuestion').value;
             var responseDiv = document.getElementById('quickResponse');
             var spinner = document.getElementById('loadingSpinner');
             var responseText = document.getElementById('responseText');
-            
+
             responseDiv.classList.remove('d-none');
             spinner.classList.remove('d-none');
             responseText.innerHTML = '';
-            
+
             fetch("{{ url_for('chat') }}", {
                 method: 'POST',
                 headers: {

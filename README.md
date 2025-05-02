@@ -54,13 +54,19 @@ An interactive web application that combines computer vision and language models
    ARCGIS_API_KEY=your_arcgis_api_key
    ```
 
-4. Start the app:
+4. Copy the local model files from `models/genus/` to `models/`:
+
+   ```bash
+   cp models/genus/* models/
+   ```
+
+5. Start the app:
 
    ```bash
    python app.py
    ```
 
-5. Open [http://localhost:5002](http://localhost:5002) in your browser.
+6. Open [http://localhost:5002](http://localhost:5002) in your browser.
 
 ## Project Structure
 

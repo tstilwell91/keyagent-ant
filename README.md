@@ -242,11 +242,11 @@ DEBUG: Plotting SHAP shape: (5, 224, 224, 3, 42)
   Plot saved.
 ```
 
-### Interpreting Superpixel Highlights
+### Interpreting Model and Superpixel Highlights
 
 The SHAP image plots in `compare_pred_true` mode include superpixel highlights:
 
 * The **green highlighted areas** (top positive superpixels) appear mainly on the legs and the petiole/waist region. This tells you that the model found the strongest evidence for *bothroponera* in these specific parts of the ant for this image.
 * The **purple (magenta) highlighted areas** (top negative superpixels) are on the upper part of the mesosoma (thorax) and perhaps some lower background/leg areas. These regions contributed negatively (or least positively) toward the *bothroponera* prediction.
 
-These insights can help validate the model’s behavior or uncover misleading signals in the data.
+Regardless of the mode, the second panel displays the predicted class along with its confidence score, while the third panel shows the true class label. Each image is overlaid with SHAP values. Red regions indicate areas that contributed positively toward the class decision, and blue regions indicate areas that contributed little or negatively.

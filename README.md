@@ -150,3 +150,103 @@ Predicted genus: polyrhachis (confidence: 1.0000)
 
 Note: You may see a `FutureWarning` from PyTorch regarding `torch.load`. This is expected and safe when using your own model checkpoints.
 
+## Model Explainability
+
+To better understand the model's predictions, especially which parts of the ant images most influence the classification decision, we provide a script using SHAP (SHapley Additive exPlanations) with optional **superpixel segmentation**.
+
+### Folder Structure
+
+The explainability scripts are organized under:
+
+```bash
+explainability/
+├── explain_shap_super.py        # Main SHAP explanation script with superpixel support
+├── explain_shap_super.sh        # SLURM submission script
+├── exp1_compare_image_0.png     # Example SHAP explanation image
+```
+
+### Requirements
+
+Ensure you have the following additional dependencies installed:
+
+```bash
+pip install scikit-image shap
+```
+
+### Running the Script
+
+To generate SHAP explanations on the Wahab cluster:
+
+```bash
+cd explainability
+
+sbatch explain_shap_super.sh
+```
+
+### Parameters:
+
+* `--model_path`: Path to the trained model `.pth` file.
+* `--data_dir`: Root directory containing subfolders of genus-labeled ant images.
+* `--output_file`: Base name for output SHAP plots.
+* `--num_explain`: Number of images to explain.
+* `--num_background`: Number of images to use for SHAP background distribution.
+* `--analysis_mode`: Choose between `predict_only` and `compare_pred_true` modes.
+* `--add_superpixel_stats`: Enable superpixel-based SHAP region analysis.
+* `--num_superpixels`: Approximate number of superpixels to generate per image.
+* `--top_n_superpixels`: Number of positive/negative contributing regions to highlight.
+
+### Output:
+
+* Images are saved to the current directory (or use full path in `--output_file`).
+* When `--add_superpixel_stats` is enabled, the original image will include overlays of superpixel boundaries and the most influential regions (positive and negative).
+
+### Sample Output
+
+![SHAP Explanation Example](explainability/exp1_compare_image_0.png)
+
+```
+Using device: cuda
+Selected Analysis Mode: compare_pred_true
+Superpixel stats enabled.
+Loading dataset structure from: ../training_data
+Dataset: Found 10211 images across 42 genera.
+Found 42 classes (10211 images total).
+Defining model architecture (EfficientNet-B4) for 42 classes...
+Loading trained model weights from: ./genus_best_model.pth
+Using batch size 8 for SHAP data.
+Loading background data batches...
+Loading explanation data batches...
+Using 50 background images.
+Explaining 5 foreground images.
+Calculating SHAP values (this may take some time)...
+SHAP finished in 226.25 sec.
+DEBUG: Type of shap_values_np: <class 'numpy.ndarray'>
+DEBUG: SHAP values shape: (5, 3, 224, 224, 42)
+DEBUG: SHAP stats: min=-2.81, max=2.58, mean=5.7e-06
+DEBUG: Plotting SHAP shape: (5, 224, 224, 3, 42)
+
+--- Starting Explanation Loop for 5 Images ---
+--- Processing Image 1/5 ---
+  Calculating Superpixel Stats (Predicted Class: brachyponera)...
+    Generated 70 superpixels in 0.08 sec.
+    Top 3 Negative Superpixels (RegionID: MeanSHAP):
+      69: -0.0009
+      15: -0.0009
+      9: -0.0008
+    Top 3 Positive Superpixels (RegionID: MeanSHAP):
+      3: 0.0061
+      13: 0.0033
+      27: 0.0030
+  Generating 'compare_pred_true' plot for image 0...
+  Saving plot to ./shap_output/exp1_compare_image_0.png...
+  Plot saved.
+```
+
+### Interpreting Superpixel Highlights
+
+The SHAP image plots in `compare_pred_true` mode include superpixel highlights:
+
+* The **green highlighted areas** (top positive superpixels) appear mainly on the legs and the petiole/waist region. This tells you that the model found the strongest evidence for *bothroponera* in these specific parts of the ant for this image.
+* The **purple (magenta) highlighted areas** (top negative superpixels) are on the upper part of the mesosoma (thorax) and perhaps some lower background/leg areas. These regions contributed negatively (or least positively) toward the *bothroponera* prediction.
+
+These insights can help validate the model’s behavior or uncover misleading signals in the data.

@@ -40,3 +40,8 @@ uploads/*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Model
+models/classes.json
+models/genus_best_model_full.pth
+models/genus_metadata.json

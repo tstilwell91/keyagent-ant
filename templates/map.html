@@ -48,14 +48,12 @@
             <div class="card-body p-0">
                 <div id="mapView" class="position-relative">
                     <!-- Map will be rendered here -->
-                    
                     <div class="map-overlay d-none d-md-block">
                         <h5>Legend</h5>
                         <div class="legend-item"><div class="legend-color" style="background-color: #e41a1c;"></div><div>S. invicta</div></div>
                         <div class="legend-item"><div class="legend-color" style="background-color: #377eb8;"></div><div>T. sessile</div></div>
                         <div class="legend-item"><div class="legend-color" style="background-color: #4daf4a;"></div><div>F. biophilica</div></div>
                         <div class="legend-item"><div class="legend-color" style="background-color: #984ea3;"></div><div>C. chromaiodes</div></div>
-                        <div class="legend-item"><div class="legend-color" style="background-color: #ff7f00;"></div><div>NO ID YET</div></div>
                         <div class="legend-item"><div class="legend-color" style="background-color: #a65628;"></div><div>L. humile</div></div>
                         <div class="legend-item"><div class="legend-color" style="background-color: #f781bf;"></div><div>P. imparis</div></div>
                         <div class="legend-item"><div class="legend-color" style="background-color: #999999;"></div><div>L. spp</div></div>
@@ -63,7 +61,7 @@
                         <div class="legend-item"><div class="legend-color" style="background-color: #00ced1;"></div><div>S. trigonignathum</div></div>
                         <div class="legend-item"><div class="legend-color" style="background-color: #8b4513;"></div><div>M. minimum</div></div>
                         <div class="legend-item"><div class="legend-color" style="background-color: #1e90ff;"></div><div>N. fulva</div></div>
-                    </div>
+                    </div>                    
                 </div>
             </div>
         </div>
@@ -173,7 +171,6 @@
                     case "T. sessile": color = [55,126,184]; break; // Blue
                     case "F. biophilica": color = [77,175,74]; break; // Green
                     case "C. chromaiodes": color = [152,78,163]; break; // Purple
-                    case "NO ID YET": color = [255,127,0]; break; // Orange
                     case "L. humile": color = [166,86,40]; break; // Brown
                     case "P. imparis": color = [247,129,191]; break; // Pink
                     case "L. spp": color = [153,153,153]; break; // Gray
@@ -225,18 +222,20 @@
             function addSamplePoints() {
                 // Sample data points
                 const samplePoints = [
-                    { lon: -76.3068, lat: 36.8863, species: "S. invicta", notes: "Kaufman Hall area" },
-                    { lon: -76.3062, lat: 36.8859, species: "T. sessile", notes: "Constant Hall area" },
-                    { lon: -76.3055, lat: 36.8854, species: "F. biophilica", notes: "Webb Center area" },
-                    { lon: -76.3047, lat: 36.8849, species: "C. chromaiodes", notes: "Brock Commons area" },
-                    { lon: -76.3057, lat: 36.8857, species: "NO ID YET", notes: "Kaufman Mall (center)" },
-                    { lon: -76.3060, lat: 36.8845, species: "L. humile", notes: "Parking Garage B" },
-                    { lon: -76.3072, lat: 36.8852, species: "P. imparis", notes: "Science Building" },
-                    { lon: -76.3049, lat: 36.8861, species: "L. spp", notes: "Dragas Hall area" },
-                    { lon: -76.3052, lat: 36.8865, species: "T. difficilis", notes: "Monarch Way (north)" },
-                    { lon: -76.3059, lat: 36.8847, species: "S. trigonignathum", notes: "Batten Arts & Letters" },
-                    { lon: -76.3070, lat: 36.8860, species: "M. minimum", notes: "Library area" },
-                    { lon: -76.3040, lat: 36.8850, species: "N. fulva", notes: "Village area" },
+                    { lon: -76.3052084, lat: 36.8854701, species: "N. fulva", notes: "webb_kauf" },
+                    { lon: -76.3056302, lat: 36.8857388, species: "N. fulva", notes: "webb_kauf" },
+                    { lon: -76.3079221, lat: 36.8858219, species: "T. sessile", notes: "esb_kauf" },
+                    { lon: -76.3072918, lat: 36.8854202, species: "T. sessile", notes: "esb_kauf" },
+                    { lon: -76.3077917, lat: 36.8838833, species: "M. minimum", notes: "mgb_43garage" },
+                    { lon: -76.3067896, lat: 36.8855307, species: "S. trigonignathum", notes: "oldchem" },
+                    { lon: -76.3057546, lat: 36.8874226, species: "T. difficilis", notes: "webb_constant" },
+                    { lon: -76.3059021, lat: 36.8873451, species: "L. spp", notes: "webb_constant" },
+                    { lon: -76.3057053, lat: 36.8873024, species: "P. imparis", notes: "webb_constant" },
+                    { lon: -76.3059406, lat: 36.8870190, species: "L. humile", notes: "webb_constant" },
+                    { lon: -76.3072492, lat: 36.8852673, species: "C. chromaiodes", notes: "pond_engineering" },
+                    { lon: -76.3047548, lat: 36.8872239, species: "F. biophilica", notes: "constant" },
+                    { lon: -76.3058300, lat: 36.8848857, species: "S. invicta", notes: "mgb_library" },
+                    { lon: -76.3059722, lat: 36.8842537, species: "S. invicta", notes: "oldchem" }
                 ];
                 console.log('Adding sample points:', samplePoints);
                 samplePoints.forEach(point => {

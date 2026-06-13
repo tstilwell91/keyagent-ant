@@ -122,3 +122,24 @@ PYTHONPATH=src python3 -m antid.data.build_splits \
 
 - **Strict Path Validation:** The validator requires that every image listed in `image_path` exists on disk. Moving the dataset or mounting it to a different path will require rebuilding the manifest or specifying the correct `--image-root`.
 - **Stratification Minimums:** Stratified splitting on a target requires at least 3 samples per class to ensure representation across all three sets (train, val, test).
+
+---
+
+## 7. Real-World & Legacy Dataset Integration
+
+### Legacy Downloader Output Format
+The legacy project downloader scripts (`downloader/download-medium.py` and `download-high.py`) fetch images from AntWeb according to `downloader/Sup_top97species_Qmed_def_info.csv` and write them into:
+`training_data/<genus>_<species>/`
+
+Because these folders are named as `<genus>_<species>`, they are 100% compatible with this manifest pipeline. To index them, you can point `--image-root` directly to the `training_data` folder on disk:
+```bash
+PYTHONPATH=src python3 -m antid.data.build_manifest \
+    --image-root training_data \
+    --output data/processed/manifest.csv
+```
+
+### Note on `specimen-imaging/` Sample Folder
+The `specimen-imaging/` directory contains sample images organized in a flat structure (`specimen-imaging/<genus>-<species>.<ext>`) rather than taxonomic subdirectories. This flat layout is **not** suitable for direct automatic scanning by `build_manifest.py`. 
+
+To process these files with the manifest pipeline, you must copy or soft-link them into taxonomic subdirectories (e.g. `scratch/smoke_images/Camponotus_pennsylvanicus/`) or use the `--fallback-genus` and `--fallback-species` flags if indexing single-species subsets.
+

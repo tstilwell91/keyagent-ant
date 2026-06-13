@@ -61,3 +61,7 @@ models/**/*.safetensors
 .pytest_cache/
 review_bundle.txt
 .venv/
+# Smoke test outputs
+data/processed/*.csv
+data/splits/
+scratch/

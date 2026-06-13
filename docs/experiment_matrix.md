@@ -127,3 +127,40 @@ To evaluate models on the holdout `test.csv` splits and generate the standardize
 3.  **Comparative Analysis:**
     - Enable cross-model comparisons (e.g., comparing ResNet18 vs. EfficientNet-B4 baseline on `v2-curated`).
     - Output LaTeX and markdown tables suitable for publication.
+
+---
+
+## 5. Realized HPC Baseline Results (Research Progress)
+
+The following baseline runs have been successfully executed on the HPC cluster:
+
+### Run 1: Smoke B4 v2 (Verification Run)
+*   **Job ID:** 5745354
+*   **Dataset:** `v2-curated`
+*   **Model:** EfficientNet-B4
+*   **Epochs:** 1
+*   **Best Validation Accuracy:** 0.2779
+*   **Purpose:** Smoke test to verify cluster staging, class indexing, image path resolution, and batch pipelines. Performance is not representative of full training.
+
+### Run 2: B4 Species Pair (Specimen-Aware Baseline)
+*   **Job ID:** 5745363
+*   **Dataset:** `v1-specimen-aware`
+*   **Model:** EfficientNet-B4
+*   **Epochs:** 25
+*   **Best Validation Accuracy:** 0.7358
+*   **Final Train Accuracy:** 0.8632
+*   **Final Validation Accuracy:** 0.7314
+
+### Run 3: B4 v2 Curated (Curated Specimen-Aware Baseline)
+*   **Job ID:** 5745393
+*   **Dataset:** `v2-curated`
+*   **Model:** EfficientNet-B4
+*   **Epochs:** 25
+*   **Best Validation Accuracy:** 0.7221
+*   **Final Train Accuracy:** 0.8700
+*   **Final Validation Accuracy:** 0.7176
+
+### Key Interpretations & Insights
+*   **Stable Convergence without Collapse:** Both the `v1-specimen-aware` and `v2-curated` datasets trained successfully to 25 epochs. The models converged smoothly with a final training accuracy of 86-87% and validation accuracy in the 71-74% range, confirming there is no gradient or model collapse.
+*   **Leakage-Free Benchmark Baseline:** These metrics establish a robust and realistic baseline, uninflated by specimen-level leakage. This sets a strong foundation for the next stages of KeyAgent-Ant, including comparative explanation and morphology trait prediction.
+

@@ -85,8 +85,14 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs, device, sa
 
 def main():
     parser = argparse.ArgumentParser(description='PyTorch Ant Species Classification Training')
-    parser.add_argument('--data_dir', type=str, required=True,
+    parser.add_argument('--data_dir', type=str, required=False,
                         help='Path to dataset root directory (each subfolder is a species label)')
+    parser.add_argument('--split_dir', type=str, default=None,
+                        help='Path to dataset split folder containing train.csv and val.csv (bypasses ImageFolder)')
+    parser.add_argument('--target_type', type=str, default='species', choices=['species', 'genus'],
+                        help='Target label level: species or genus (default: species)')
+    parser.add_argument('--image_root', type=str, default='.',
+                        help='Root directory for images in split manifests (default: current directory)')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='Input batch size for training (default: 32)')
     parser.add_argument('--epochs', type=int, default=25,
@@ -95,7 +101,12 @@ def main():
                         help='Learning rate (default: 0.001)')
     parser.add_argument('--save_model', type=str, default='best_model.pth',
                         help='Path to save the best model (default: best_model.pth)')
+    parser.add_argument('--save_classes', type=str, default=None,
+                        help='Path to save class list JSON in model-index order (default: next to save_model)')
     args = parser.parse_args()
+
+    if not args.data_dir and not args.split_dir:
+        parser.error("Either --data_dir or --split_dir must be provided.")
 
     # Set device to GPU if available
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -120,16 +131,40 @@ def main():
         ]),
     }
 
-    # Load the dataset using ImageFolder
-    full_dataset = datasets.ImageFolder(args.data_dir, transform=data_transforms['train'])
+    # Load dataset using either ManifestDataset adapter or ImageFolder
+    if args.split_dir:
+        try:
+            from antid.training.dataset_adapter import ManifestDataset
+        except ImportError:
+            import sys
+            # Fallback if package is not installed but src is in PYTHONPATH
+            sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
+            from antid.training.dataset_adapter import ManifestDataset
 
-    # Split dataset into training and validation sets (80/20 split)
-    train_size = int(0.8 * len(full_dataset))
-    val_size = len(full_dataset) - train_size
-    train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
-
-    # For the validation dataset, override the transform to use validation transforms
-    val_dataset.dataset.transform = data_transforms['val']
+        print(f"Loading custom splits from: {args.split_dir}")
+        train_dataset = ManifestDataset(
+            split_file=os.path.join(args.split_dir, 'train.csv'),
+            image_root=args.image_root,
+            target_type=args.target_type,
+            transform=data_transforms['train']
+        )
+        val_dataset = ManifestDataset(
+            split_file=os.path.join(args.split_dir, 'val.csv'),
+            image_root=args.image_root,
+            target_type=args.target_type,
+            transform=data_transforms['val']
+        )
+        class_names = train_dataset.classes
+    else:
+        # Load the dataset using ImageFolder
+        full_dataset = datasets.ImageFolder(args.data_dir, transform=data_transforms['train'])
+        # Split dataset into training and validation sets (80/20 split)
+        train_size = int(0.8 * len(full_dataset))
+        val_size = len(full_dataset) - train_size
+        train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
+        # For the validation dataset, override the transform to use validation transforms
+        val_dataset.dataset.transform = data_transforms['val']
+        class_names = full_dataset.classes
 
     # Create DataLoaders for training and validation
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
@@ -137,7 +172,6 @@ def main():
     dataloaders = {'train': train_loader, 'val': val_loader}
 
     # Print detected classes
-    class_names = full_dataset.classes
     print("Detected classes:", class_names)
     num_classes = len(class_names)
 
@@ -153,6 +187,19 @@ def main():
 
     # Train and validate the model
     model = train_model(model, dataloaders, criterion, optimizer, args.epochs, device, args.save_model)
+
+    # Save class mapping JSON in model-index order
+    import json
+    if args.save_classes:
+        classes_save_path = args.save_classes
+    else:
+        model_dir, model_name = os.path.split(args.save_model)
+        name_no_ext, _ = os.path.splitext(model_name)
+        classes_save_path = os.path.join(model_dir, f"{name_no_ext}_classes.json")
+
+    with open(classes_save_path, 'w', encoding='utf-8') as json_f:
+        json.dump(class_names, json_f, indent=2)
+    print(f"Saved class mapping JSON to: {classes_save_path}")
 
 if __name__ == '__main__':
     main()

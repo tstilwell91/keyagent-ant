@@ -56,3 +56,8 @@ models/**/*.pth
 models/**/*.pt
 models/**/*.ckpt
 models/**/*.safetensors
+
+# Testing & Review
+.pytest_cache/
+review_bundle.txt
+.venv/

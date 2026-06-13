@@ -45,3 +45,14 @@ Thumbs.db
 models/classes.json
 models/genus_best_model_full.pth
 models/genus_metadata.json
+
+# Model artifacts
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+
+models/**/*.pth
+models/**/*.pt
+models/**/*.ckpt
+models/**/*.safetensors

@@ -57,10 +57,11 @@ src/
     ├── __init__.py
     └── data/
         ├── __init__.py
-        ├── detect_view.py       # Deterministic AntWeb view parser
-        ├── build_manifest.py     # Recursive image scanner and registry builder
-        ├── build_splits.py       # Reproducible stratified train/val/test splits
-        └── validate_dataset.py   # Dataset manifest verification and consistency checks
+        ├── detect_view.py            # Deterministic AntWeb view parser
+        ├── build_manifest.py          # Recursive image scanner and registry builder
+        ├── build_splits.py            # Reproducible stratified train/val/test splits (updated for specimen grouping)
+        ├── build_dataset_variants.py  # Dataset variant generator and verification tools
+        └── validate_dataset.py        # Dataset manifest verification and consistency checks
 ```
 
 We have also added a unit testing harness under `tests/`:
@@ -68,7 +69,9 @@ We have also added a unit testing harness under `tests/`:
 tests/
 ├── test_detect_view.py
 ├── test_dataset_manifest.py
-└── test_build_splits.py
+├── test_build_splits.py
+├── test_build_dataset_variants.py
+└── test_build_specimen_splits.py
 ```
 
 ### What is Intentionally Left Intact (Not Migrated Yet):
@@ -84,6 +87,8 @@ We will proceed iteratively following the KeyAgent-Ant research roadmap:
 
 ### Milestone 1: Baseline Reproduction
 - Set up a clean local model training environment and verify we can reproduce or train the baseline genus/species classifiers on the downloaded AntWeb dataset.
+- > [!IMPORTANT]
+  > **Dataset Expansion Decision:** Expanding the dataset beyond the original 97 species is a strategic research decision that must be based on systematic audit findings (see [Legacy Dataset Audit Report](file:///Users/tstilwel/Documents/phd/cs895_genai/2026/KeyAgent-Ant/keyagent-ant/docs/dataset_audit_antweb.md)), rather than uncontrolled bulk downloads. We will first reproduce the original baseline before evaluating curated v2 options.
 
 ### Milestone 2: Model Evaluation Metrics
 - Establish systematic validation and evaluation scripts. Generate confusion matrices, F1-scores, precision, and recall metrics across view types.

@@ -119,6 +119,119 @@ def split_indices_stratified(
     return train_indices, val_indices, test_indices
 
 
+def split_indices_grouped(
+    rows: List[Dict],
+    target: str,
+    group_col: str,
+    train_ratio: float,
+    val_ratio: float,
+    test_ratio: float,
+    seed: int,
+    allow_unstratified: bool,
+) -> Tuple[List[int], List[int], List[int]]:
+    """
+    Splits dataset indices into train, val, and test partitions grouped by a column (specimen-aware).
+    No group value will leak across partitions. Shuffling and stratification are performed at group level.
+    """
+    import random
+
+    rng = random.Random(seed)
+
+    # 1. Group row indices by group_col value
+    group_to_indices = defaultdict(list)
+    for idx, row in enumerate(rows):
+        grp = row.get(group_col, "").strip()
+        if not grp:
+            grp = f"unknown_row_{idx}"
+        group_to_indices[grp].append(idx)
+
+    # 2. Map groups to their target class labels
+    group_to_class = {}
+    for grp, indices in group_to_indices.items():
+        first_row = rows[indices[0]]
+        if target == "species":
+            val = f"{first_row['genus'].strip()} {first_row['species'].strip()}"
+        else:
+            val = first_row[target].strip()
+        group_to_class[grp] = val
+
+    # 3. Group unique group names by target class
+    class_to_groups = defaultdict(list)
+    for grp, cls in group_to_class.items():
+        class_to_groups[cls].append(grp)
+
+    # 4. Validate stratification feasibility at group-level
+    small_classes = {cls: len(grps) for cls, grps in class_to_groups.items() if len(grps) < 3}
+    if small_classes and not allow_unstratified:
+        raise ValueError(
+            f"Cannot stratify small classes (fewer than 3 unique specimens): {list(small_classes.keys())}. "
+            "Please use --allow-unstratified to allow best-effort splitting."
+        )
+
+    train_indices = []
+    val_indices = []
+    test_indices = []
+
+    # 5. Partition groups class-by-class
+    for cls, grps in sorted(class_to_groups.items()):
+        # Sort groups before shuffling for cross-platform stability
+        shuffled_grps = sorted(grps)
+        rng.shuffle(shuffled_grps)
+
+        M = len(shuffled_grps)
+
+        if M == 1:
+            c_train_grps = shuffled_grps
+            c_val_grps = []
+            c_test_grps = []
+            logger.warning(
+                f"Class '{cls}' has only 1 unique specimen group. Allocated to train only."
+            )
+        elif M == 2:
+            c_train_grps = [shuffled_grps[0]]
+            c_val_grps = [shuffled_grps[1]]
+            c_test_grps = []
+            logger.warning(
+                f"Class '{cls}' has only 2 unique specimen groups. Allocated to train and val only."
+            )
+        else:
+            # M >= 3: allocate at least 1 to each partition, then distribute using discrepancy minimization
+            n_train = 1
+            n_val = 1
+            n_test = 1
+
+            t_train = M * train_ratio
+            t_val = M * val_ratio
+            t_test = M * test_ratio
+
+            for _ in range(M - 3):
+                diff_train = t_train - n_train
+                diff_val = t_val - n_val
+                diff_test = t_test - n_test
+
+                max_diff = max(diff_train, diff_val, diff_test)
+                if max_diff == diff_train:
+                    n_train += 1
+                elif max_diff == diff_val:
+                    n_val += 1
+                else:
+                    n_test += 1
+
+            c_train_grps = shuffled_grps[:n_train]
+            c_val_grps = shuffled_grps[n_train:n_train + n_val]
+            c_test_grps = shuffled_grps[n_train + n_val:]
+
+        # Expand groups back to row indices
+        for grp in c_train_grps:
+            train_indices.extend(group_to_indices[grp])
+        for grp in c_val_grps:
+            val_indices.extend(group_to_indices[grp])
+        for grp in c_test_grps:
+            test_indices.extend(group_to_indices[grp])
+
+    return train_indices, val_indices, test_indices
+
+
 def build_splits(
     manifest_path: str,
     output_dir: str,
@@ -128,6 +241,8 @@ def build_splits(
     test_ratio: float,
     seed: int,
     allow_unstratified: bool,
+    group_by: str = None,
+    specimen_aware: bool = False,
 ) -> None:
     """Reads manifest, partitions data, and writes split CSV files."""
     manifest_file = Path(manifest_path)
@@ -153,11 +268,34 @@ def build_splits(
     if target not in ["genus", "species"]:
         raise ValueError(f"Target column must be 'genus' or 'species' (got '{target}')")
 
-    # Perform stratified split
-    logger.info(f"Splitting dataset of {len(rows)} samples stratified by '{target}' with seed {seed}...")
-    train_idx, val_idx, test_idx = split_indices_stratified(
-        rows, target, train_ratio, val_ratio, test_ratio, seed, allow_unstratified
-    )
+    # Determine grouping column for specimen-aware splits
+    group_col = None
+    if group_by:
+        group_col = group_by
+    elif specimen_aware:
+        if "specimen_id" in fieldnames:
+            group_col = "specimen_id"
+        elif "catalog_number" in fieldnames:
+            group_col = "catalog_number"
+        else:
+            raise ValueError(
+                "Could not auto-detect grouping column. Neither 'specimen_id' nor 'catalog_number' was found in manifest headers."
+            )
+
+    # Perform split
+    if group_col:
+        logger.info(
+            f"Splitting dataset of {len(rows)} samples stratified by '{target}' with seed {seed} "
+            f"grouped by physical specimen ID column '{group_col}'..."
+        )
+        train_idx, val_idx, test_idx = split_indices_grouped(
+            rows, target, group_col, train_ratio, val_ratio, test_ratio, seed, allow_unstratified
+        )
+    else:
+        logger.info(f"Splitting dataset of {len(rows)} samples stratified by '{target}' with seed {seed}...")
+        train_idx, val_idx, test_idx = split_indices_stratified(
+            rows, target, train_ratio, val_ratio, test_ratio, seed, allow_unstratified
+        )
 
     # Sort indices so output is organized
     train_idx.sort()
@@ -232,6 +370,15 @@ if __name__ == "__main__":
         action="store_true",
         help="Permit best-effort splitting for small classes (<3 samples) instead of raising error.",
     )
+    parser.add_argument(
+        "--group-by",
+        help="Group rows by specified column (e.g. specimen_id or catalog_number) to prevent leakage.",
+    )
+    parser.add_argument(
+        "--specimen-aware",
+        action="store_true",
+        help="Auto-detect specimen grouping column and perform grouped splitting.",
+    )
 
     args = parser.parse_args()
 
@@ -245,6 +392,8 @@ if __name__ == "__main__":
             args.test_ratio,
             args.seed,
             args.allow_unstratified,
+            group_by=args.group_by,
+            specimen_aware=args.specimen_aware,
         )
     except Exception as e:
         logger.error(f"Failed to build splits: {e}")

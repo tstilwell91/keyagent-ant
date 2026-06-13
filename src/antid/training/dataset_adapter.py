@@ -14,7 +14,8 @@ except ImportError:
 
 def resolve_image_path(image_path, image_root, strip_prefix=None):
     """
-    Resolves an image path against an image root with fallback prefix stripping.
+    Resolves an image path against an image root with fallback prefix stripping
+    and legacy AntWeb downloader suffix fallbacks.
     
     Args:
         image_path (str or Path): The raw image path from the CSV manifest.
@@ -27,6 +28,13 @@ def resolve_image_path(image_path, image_root, strip_prefix=None):
     image_path_str = str(image_path).strip()
     p = Path(image_path_str)
     if p.is_absolute():
+        if p.exists():
+            return p
+        # Try legacy suffix fallbacks for absolute path
+        for suffix in ["_1_med", "_1_high", "_1_low", "_1"]:
+            cand = p.parent / f"{p.stem}{suffix}{p.suffix}"
+            if cand.exists():
+                return cand
         return p
 
     image_root = Path(image_root)
@@ -56,10 +64,17 @@ def resolve_image_path(image_path, image_root, strip_prefix=None):
             stripped = norm_path[len(fb):].lstrip('/')
             candidates.append(image_root / Path(stripped))
 
-    # Find first candidate that actually exists on disk
+    # Find first exact-match candidate that actually exists on disk
     for cand in candidates:
         if cand.exists():
             return cand
+
+    # If no exact match exists, try legacy suffix fallbacks for each candidate in order of preference
+    for cand in candidates:
+        for suffix in ["_1_med", "_1_high", "_1_low", "_1"]:
+            legacy_cand = cand.parent / f"{cand.stem}{suffix}{cand.suffix}"
+            if legacy_cand.exists():
+                return legacy_cand
 
     # Fallback to the first candidate (which is image_root / p) if none exist
     return candidates[0]

@@ -278,3 +278,64 @@ def test_resolve_image_path(tmp_path):
     
     resolved_subset = resolve_image_path(fallback_subset, image_root)
     assert resolved_subset == subset_target
+
+
+def test_resolve_image_path_legacy_suffix_fallbacks(tmp_path):
+    from antid.training.dataset_adapter import resolve_image_path
+    
+    image_root = tmp_path / "raw_images"
+    image_root.mkdir()
+    
+    # Let's create a directory for an ant species
+    ant_dir = image_root / "amblyopone_australis"
+    ant_dir.mkdir()
+    
+    exact_path_rel = "amblyopone_australis/casent0280654_d.jpg"
+    exact_path_full = image_root / exact_path_rel
+    
+    suffix_med_full = ant_dir / "casent0280654_d_1_med.jpg"
+    suffix_high_full = ant_dir / "casent0280654_d_1_high.jpg"
+    suffix_low_full = ant_dir / "casent0280654_d_1_low.jpg"
+    suffix_one_full = ant_dir / "casent0280654_d_1.jpg"
+    
+    # Case 1: Prioritize exact-match if it exists
+    suffix_med_full.touch()
+    exact_path_full.touch()
+    
+    assert resolve_image_path(exact_path_rel, image_root) == exact_path_full
+    
+    # Clean up exact path to test fallbacks
+    exact_path_full.unlink()
+    
+    # Case 2: Med suffix fallback (exists)
+    assert resolve_image_path(exact_path_rel, image_root) == suffix_med_full
+    
+    # Clean up med suffix
+    suffix_med_full.unlink()
+    
+    # Case 3: High suffix fallback
+    suffix_high_full.touch()
+    assert resolve_image_path(exact_path_rel, image_root) == suffix_high_full
+    suffix_high_full.unlink()
+    
+    # Case 4: Low suffix fallback
+    suffix_low_full.touch()
+    assert resolve_image_path(exact_path_rel, image_root) == suffix_low_full
+    suffix_low_full.unlink()
+    
+    # Case 5: _1 suffix fallback
+    suffix_one_full.touch()
+    assert resolve_image_path(exact_path_rel, image_root) == suffix_one_full
+    suffix_one_full.unlink()
+    
+    # Case 6: Fallback to base candidate if absolutely none of them exist
+    assert resolve_image_path(exact_path_rel, image_root) == exact_path_full
+    
+    # Case 7: Absolute path fallbacks
+    abs_path = tmp_path / "casent0000000_h.jpg"
+    abs_path_med = tmp_path / "casent0000000_h_1_med.jpg"
+    abs_path_med.touch()
+    
+    # Should resolve to the existing med suffix file even when absolute base does not exist
+    assert resolve_image_path(abs_path, image_root) == abs_path_med
+    abs_path_med.unlink()

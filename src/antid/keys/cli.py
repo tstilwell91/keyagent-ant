@@ -395,7 +395,83 @@ def run_select_trait_curation_specimens(args) -> int:
         return 1
 
 
+def run_audit_trait_visibility(args) -> int:
+    """Runs the trait visibility and evidence readiness audit subcommand."""
+    try:
+        kb_dir = args.kb_dir
+        selection_csv = args.selection_csv
+        annotation_template = args.annotation_template
+        image_root = args.image_root or "."
+        output_dir = args.output_dir or "data/traits/trait_curated_v0_audit"
+
+        if not kb_dir:
+            print(json.dumps({"status": "error", "message": "KB directory path is required."}, indent=2))
+            return 1
+        if not selection_csv:
+            print(json.dumps({"status": "error", "message": "Selection CSV path is required."}, indent=2))
+            return 1
+        if not annotation_template:
+            print(json.dumps({"status": "error", "message": "Annotation template JSONL path is required."}, indent=2))
+            return 1
+
+        from .trait_visibility_audit import run_trait_visibility_audit
+        result = run_trait_visibility_audit(
+            kb_dir=kb_dir,
+            selection_csv=selection_csv,
+            annotation_template_jsonl=annotation_template,
+            image_root=image_root,
+            output_dir=output_dir
+        )
+        print(json.dumps(result, indent=2))
+        return 0
+    except Exception as e:
+        output = {
+            "status": "error",
+            "message": f"Trait visibility audit failed: {e}"
+        }
+        print(json.dumps(output, indent=2), file=sys.stderr)
+        return 1
+
+
+def run_materialize_trait_curation_images(args) -> int:
+    """Runs the trait curation images materialization subcommand."""
+    try:
+        selection_csv = args.selection_csv
+        split_dir = args.split_dir
+        image_root = args.image_root or "."
+        dry_run = args.dry_run
+        overwrite = args.overwrite
+        timeout = args.timeout_seconds or 30
+
+        if not selection_csv:
+            print(json.dumps({"status": "error", "message": "Selection CSV path is required."}, indent=2))
+            return 1
+        if not split_dir:
+            print(json.dumps({"status": "error", "message": "Split directory path is required."}, indent=2))
+            return 1
+
+        from .trait_curation_assets import materialize_trait_curation_images
+        result = materialize_trait_curation_images(
+            selection_csv=selection_csv,
+            split_dir=split_dir,
+            image_root=image_root,
+            dry_run=dry_run,
+            overwrite=overwrite,
+            timeout_seconds=timeout
+        )
+        print(json.dumps(result, indent=2))
+        return 0
+    except Exception as e:
+        output = {
+            "status": "error",
+            "message": f"Trait curation assets materialization failed: {e}"
+        }
+        print(json.dumps(output, indent=2), file=sys.stderr)
+        return 1
+
+
 def main() -> None:
+
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
         description="KeyAgent-Ant Taxonomic KB Validation & Reasoning Harness CLI"
@@ -620,6 +696,84 @@ def main() -> None:
         help="If specified, do not fallback to other splits if the preferred split has insufficient specimens."
     )
 
+    # audit-trait-visibility subcommand
+    audit_parser = subparsers.add_parser("audit-trait-visibility", help="Run deterministic offline Trait Visibility and Evidence Readiness Audit.")
+    audit_parser.add_argument(
+        "--kb-dir",
+        type=str,
+        required=True,
+        help="Path to the taxonomic KB directory."
+    )
+    audit_parser.add_argument(
+        "--selection-csv",
+        type=str,
+        required=True,
+        help="Path to the selection CSV file."
+    )
+    audit_parser.add_argument(
+        "--annotation-template",
+        type=str,
+        required=True,
+        help="Path to the blank annotation template JSONL file."
+    )
+    audit_parser.add_argument(
+        "--image-root",
+        type=str,
+        default=".",
+        help="Root directory for specimen images (default: '.')."
+    )
+    audit_parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="data/traits/trait_curated_v0_audit",
+        help="Output directory for audit artifacts (default: 'data/traits/trait_curated_v0_audit')."
+    )
+
+    # materialize-trait-curation-images subcommand
+    materialize_parser = subparsers.add_parser("materialize-trait-curation-images", help="Run deterministic offline Trait Curation Image Materialization.")
+    materialize_parser.add_argument(
+        "--selection-csv",
+        type=str,
+        required=True,
+        help="Path to the selection CSV file."
+    )
+    materialize_parser.add_argument(
+        "--split-dir",
+        type=str,
+        required=True,
+        help="Path to the split files directory containing train.csv, val.csv, test.csv."
+    )
+    materialize_parser.add_argument(
+        "--image-root",
+        type=str,
+        default=".",
+        help="Root directory for specimen images (default: '.')."
+    )
+    materialize_parser.add_argument(
+        "--dry-run",
+        dest="dry_run",
+        action="store_true",
+        help="Perform dry run without downloading (default)."
+    )
+    materialize_parser.add_argument(
+        "--no-dry-run",
+        dest="dry_run",
+        action="store_false",
+        help="Actually download files."
+    )
+    materialize_parser.set_defaults(dry_run=True)
+    materialize_parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing files."
+    )
+    materialize_parser.add_argument(
+        "--timeout-seconds",
+        type=int,
+        default=30,
+        help="HTTP timeout in seconds (default: 30)."
+    )
+
     args = parser.parse_args()
 
     if args.command == "validate":
@@ -640,7 +794,12 @@ def main() -> None:
         sys.exit(run_generate_trait_template(args))
     elif args.command == "select-trait-curation-specimens":
         sys.exit(run_select_trait_curation_specimens(args))
+    elif args.command == "audit-trait-visibility":
+        sys.exit(run_audit_trait_visibility(args))
+    elif args.command == "materialize-trait-curation-images":
+        sys.exit(run_materialize_trait_curation_images(args))
 
 
 if __name__ == "__main__":
     main()
+

@@ -1,0 +1,40 @@
+{
+  "status": "success",
+  "selected_specimens": 20,
+  "selected_taxa": 4,
+  "selected_species": 11,
+  "split_counts": {
+    "test": 19,
+    "val": 1,
+    "train": 0
+  },
+  "kb_trait_count": 11,
+  "kb_rule_count": 12,
+  "traits_used_in_rules": 11,
+  "traits_not_used_in_rules": 0,
+  "traits_with_view_metadata": 11,
+  "traits_missing_view_metadata": 0,
+  "specimens_ready": 20,
+  "specimens_missing_files": 0,
+  "specimen_trait_rows": 220,
+  "visibility_status_counts": {
+    "ready_for_image_review": 220
+  },
+  "review_recommendation_counts": {
+    "inspect_multiple_views": 60,
+    "inspect_dorsal": 20,
+    "inspect_profile": 40,
+    "inspect_head": 100
+  },
+  "represented_kb_taxa": [
+    "crematogaster",
+    "solenopsis",
+    "strumigenys",
+    "wasmannia_auropunctata"
+  ],
+  "unrepresented_kb_taxa": [
+    "eurhopalothrix_floridana",
+    "xenomyrmex"
+  ],
+  "output_dir": "data/traits/trait_curated_v0_audit"
+}

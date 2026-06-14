@@ -343,3 +343,90 @@ PYTHONPATH=src .venv/bin/python -m antid.keys.cli evaluate-key-consistency \
 }
 ```
 The consolidated JSON report was successfully generated at `examples/kb/mock_key_consistency_eval.json`.
+
+---
+
+## 8. Trait Visibility and Evidence Readiness Audit
+
+The latest deterministic offline milestone introduces a pre-flight "sanity check" audit of specimen images, KB taxon registries, and trait schema view metadata before proceeding to image-grounded model predictions or manual expert annotation campaigns.
+
+### A. Purpose & Scope
+- **Non-Evidentiary Design**: The audit evaluates evidence availability and schema completeness **without assigning morphological trait values** or predicting taxon classifications.
+- **Specimen Image Verification**: Validates image path availability, file physical presence, and readability (resolving dimensions via `Pillow`/`PIL` when available).
+- **Schema Alignment**: Verifies that each schema trait contains necessary view metadata and is actively referenced by rules.
+- **Coverage Auditing**: Maps selected specimens to KB couplet rules to assess representation gaps.
+
+### B. Files Created
+- `src/antid/keys/trait_visibility_audit.py` (Core audit driver and logic)
+- `tests/test_trait_visibility_audit.py` (Comprehensive synthetic mock unit tests)
+- `docs/trait_visibility_audit.md` (Detailed usage and schema documentation)
+- `data/traits/trait_curated_v0_audit/specimen_image_readiness.csv`
+- `data/traits/trait_curated_v0_audit/trait_schema_readiness.csv`
+- `data/traits/trait_curated_v0_audit/specimen_trait_visibility_matrix.csv`
+- `data/traits/trait_curated_v0_audit/kb_subset_coverage.json`
+- `data/traits/trait_curated_v0_audit/summary.json`
+
+### C. Execution Command
+```bash
+PYTHONPATH=src .venv/bin/python -m antid.keys.cli audit-trait-visibility \
+  --kb-dir data/kb/poc_myrmicinae_mem \
+  --selection-csv data/traits/trait_curated_v0_selection.csv \
+  --annotation-template data/traits/trait_curated_v0_annotation_template.jsonl \
+  --image-root . \
+  --output-dir data/traits/trait_curated_v0_audit
+```
+
+### D. Audit Summary Results
+```json
+{
+  "status": "success",
+  "selected_specimens": 20,
+  "selected_taxa": 4,
+  "selected_species": 11,
+  "split_counts": {
+    "test": 19,
+    "val": 1,
+    "train": 0
+  },
+  "kb_trait_count": 11,
+  "kb_rule_count": 12,
+  "traits_used_in_rules": 11,
+  "traits_not_used_in_rules": 0,
+  "traits_with_view_metadata": 11,
+  "traits_missing_view_metadata": 0,
+  "specimens_ready": 0,
+  "specimens_missing_files": 20,
+  "specimen_trait_rows": 220,
+  "visibility_status_counts": {
+    "missing_required_view": 220
+  },
+  "review_recommendation_counts": {
+    "expert_review_needed": 220
+  },
+  "represented_kb_taxa": [
+    "crematogaster",
+    "solenopsis",
+    "strumigenys",
+    "wasmannia_auropunctata"
+  ],
+  "unrepresented_kb_taxa": [
+    "eurhopalothrix_floridana",
+    "xenomyrmex"
+  ],
+  "output_dir": "data/traits/trait_curated_v0_audit"
+}
+```
+
+### E. Key Findings & Diagnostic Insights
+1. **Specimen Image Paths**: All 20 selected curation specimens contain properly structured tri-view image paths.
+2. **Offline Local Files Absence**: Since this is an offline run before local asset retrieval, the physical image files do not yet exist on disk, producing the expected 100% `missing_required_view` status and `expert_review_needed` recommendations. This is correct and demonstrates robust diagnostic reporting.
+3. **Schema Metadata Completeness**: 100% of defined traits in `trait_schema.yaml` are fully ready, mapping camera view metadata (`visible_in_views`) and allowed values. All 11 traits are actively used in rules.
+4. **Key and Subclass Coverage**:
+   - Mapped specimens represent **4 of 6 registered KB taxa** (`crematogaster`, `solenopsis`, `strumigenys`, `wasmannia_auropunctata`).
+   - Two registered taxa (`eurhopalothrix_floridana` and `xenomyrmex`) are currently unrepresented by any selected specimen.
+   - This subset allows test coverage for **9 of the 12 KB couplet rules**. Three rules remain untested due to unrepresented taxa.
+
+### F. Recommended Next Actions
+- **Acquire Specimen Image Files**: Run the necessary download pipelines to fetch the physical JPG images into `data/raw/images/` for the 20 catalog numbers listed in `specimen_image_readiness.csv`.
+- **Re-Run Readiness Audit**: Re-execute the audit subcommand to verify file readability, image dimensions, and ensure transition to `ready` and `ready_for_image_review` states before launching model-based feature extraction or user visual validation.
+- **Expand Selection Subset**: If possible, add a minimal representative specimen for `eurhopalothrix_floridana` and `xenomyrmex` to achieve 100% rules and taxa coverage.

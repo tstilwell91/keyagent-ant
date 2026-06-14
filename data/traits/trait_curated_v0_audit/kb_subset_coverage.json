@@ -1,0 +1,46 @@
+{
+  "represented_kb_taxa": [
+    "crematogaster",
+    "solenopsis",
+    "strumigenys",
+    "wasmannia_auropunctata"
+  ],
+  "unrepresented_kb_taxa": [
+    "eurhopalothrix_floridana",
+    "xenomyrmex"
+  ],
+  "taxa_with_insufficient_specimens": [
+    "eurhopalothrix_floridana",
+    "xenomyrmex"
+  ],
+  "represented_rules_exercised": [
+    "mem_myrmicinae_001a",
+    "mem_myrmicinae_001b",
+    "mem_myrmicinae_002b",
+    "mem_myrmicinae_003a",
+    "mem_myrmicinae_004a",
+    "mem_myrmicinae_004b",
+    "mem_myrmicinae_005a",
+    "mem_myrmicinae_005b",
+    "mem_myrmicinae_006b"
+  ],
+  "unrepresented_rules": [
+    "mem_myrmicinae_002a",
+    "mem_myrmicinae_003b",
+    "mem_myrmicinae_006a"
+  ],
+  "represented_traits_used": [
+    "antenna_club_segments",
+    "antenna_segment_count",
+    "antennal_scrobe_position",
+    "clypeus_longitudinal_carinae",
+    "frontal_carinae_state",
+    "gaster_shape_dorsal",
+    "mandible_tooth_count",
+    "petiole_node_state",
+    "postpetiole_attachment",
+    "propodeal_armament",
+    "spongiform_tissue_petiole_postpetiole"
+  ],
+  "unrepresented_traits": []
+}

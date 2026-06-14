@@ -23,6 +23,8 @@ from .trait_sidecar_tools import (
     generate_trait_annotation_template,
 )
 from .trait_curation_dataset import select_trait_curation_specimens
+from .trait_visibility_audit import run_trait_visibility_audit
+from .trait_curation_assets import materialize_trait_curation_images
 
 __all__ = [
     "load_kb",
@@ -41,4 +43,7 @@ __all__ = [
     "summarize_trait_sidecar_coverage",
     "generate_trait_annotation_template",
     "select_trait_curation_specimens",
+    "run_trait_visibility_audit",
+    "materialize_trait_curation_images",
 ]
+

@@ -370,6 +370,31 @@ def run_generate_trait_template(args) -> int:
         return 1
 
 
+def run_select_trait_curation_specimens(args) -> int:
+    """Runs the trait curation subset specimen selection subcommand."""
+    try:
+        from .trait_curation_dataset import select_trait_curation_specimens
+        result = select_trait_curation_specimens(
+            split_dir=args.split_dir,
+            kb_dir=args.kb_dir,
+            output_selection=args.output_selection,
+            output_template=args.output_template,
+            specimens_per_taxon=args.specimens_per_taxon,
+            preferred_split=args.preferred_split,
+            seed=args.seed,
+            allow_split_fallback=not args.no_split_fallback
+        )
+        print(json.dumps(result, indent=2))
+        return 0
+    except Exception as e:
+        output = {
+            "status": "error",
+            "message": f"Specimen selection failed: {e}"
+        }
+        print(json.dumps(output, indent=2), file=sys.stderr)
+        return 1
+
+
 def main() -> None:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -545,6 +570,56 @@ def main() -> None:
         help="If specified, do not output empty observed_traits object."
     )
 
+    # select-trait-curation-specimens subcommand
+    select_parser = subparsers.add_parser("select-trait-curation-specimens", help="Select physical specimens from splits and write selection files.")
+    select_parser.add_argument(
+        "--split-dir",
+        type=str,
+        required=True,
+        help="Directory containing train.csv, val.csv, and test.csv splits."
+    )
+    select_parser.add_argument(
+        "--kb-dir",
+        type=str,
+        required=True,
+        help="Path to the taxonomic KB directory."
+    )
+    select_parser.add_argument(
+        "--output-selection",
+        type=str,
+        required=True,
+        help="Path to write the selection CSV metadata sheet."
+    )
+    select_parser.add_argument(
+        "--output-template",
+        type=str,
+        required=True,
+        help="Path to write the blank JSONL annotation template."
+    )
+    select_parser.add_argument(
+        "--specimens-per-taxon",
+        type=int,
+        default=5,
+        help="Maximum specimens to select per KB taxon (default: 5)."
+    )
+    select_parser.add_argument(
+        "--preferred-split",
+        type=str,
+        default="test",
+        help="Split to prioritize: test, val, or train (default: test)."
+    )
+    select_parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="Random seed for deterministic selection (default: 42)."
+    )
+    select_parser.add_argument(
+        "--no-split-fallback",
+        action="store_true",
+        help="If specified, do not fallback to other splits if the preferred split has insufficient specimens."
+    )
+
     args = parser.parse_args()
 
     if args.command == "validate":
@@ -563,6 +638,8 @@ def main() -> None:
         sys.exit(run_summarize_traits(args))
     elif args.command == "generate-trait-template":
         sys.exit(run_generate_trait_template(args))
+    elif args.command == "select-trait-curation-specimens":
+        sys.exit(run_select_trait_curation_specimens(args))
 
 
 if __name__ == "__main__":

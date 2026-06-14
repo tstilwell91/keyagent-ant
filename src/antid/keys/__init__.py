@@ -22,6 +22,7 @@ from .trait_sidecar_tools import (
     summarize_trait_sidecar_coverage,
     generate_trait_annotation_template,
 )
+from .trait_curation_dataset import select_trait_curation_specimens
 
 __all__ = [
     "load_kb",
@@ -39,4 +40,5 @@ __all__ = [
     "validate_observed_traits_sidecar",
     "summarize_trait_sidecar_coverage",
     "generate_trait_annotation_template",
+    "select_trait_curation_specimens",
 ]

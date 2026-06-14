@@ -1,0 +1,4 @@
+image_path,view_type,top1_label,top1_prob,top2_label,top2_prob,pred_label,confidence,true_label,split,source
+data/raw/images/crematogaster_ashmeadi/casent0123456_profile.jpg,profile,Crematogaster,0.85,solenopsis,0.15,,,crematogaster,test,antweb
+data/raw/images/solenopsis_invicta/casent0789101_profile.jpg,profile,solenopsis,0.92,Crematogaster,0.08,,,solenopsis,test,antweb
+data/raw/images/pheidole_dentata/casent0999999_profile.jpg,,,,,,pheidole_dentata,,,pheidole,test,antweb

@@ -8,6 +8,11 @@ from .kb_loader import load_kb
 from .key_reasoner import reason_over_traits, KeyReasoner
 from .evidence_schema import VisualCandidate, ModelEvidenceInput, ReasoningEvidencePacket
 from .reasoning_adapter import build_reasoning_evidence_packet
+from .prediction_artifact_adapter import (
+    prediction_row_to_model_output,
+    load_predictions_csv,
+    convert_predictions_csv_to_model_outputs,
+)
 
 __all__ = [
     "load_kb",
@@ -17,4 +22,7 @@ __all__ = [
     "ModelEvidenceInput",
     "ReasoningEvidencePacket",
     "build_reasoning_evidence_packet",
+    "prediction_row_to_model_output",
+    "load_predictions_csv",
+    "convert_predictions_csv_to_model_outputs",
 ]

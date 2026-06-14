@@ -153,6 +153,46 @@ def run_integrate(args) -> int:
         return 1
 
 
+def run_convert_predictions(args) -> int:
+    """Runs the predictions conversion subcommand."""
+    try:
+        csv_path = args.predictions_csv
+        out_path = args.output_json
+        top_k = args.top_k or 5
+
+        if not csv_path:
+            print(json.dumps({"status": "error", "message": "Predictions CSV path is required."}, indent=2))
+            return 1
+
+        if not out_path:
+            print(json.dumps({"status": "error", "message": "Output JSON path is required."}, indent=2))
+            return 1
+
+        if not os.path.exists(csv_path):
+            print(json.dumps({"status": "error", "message": f"Predictions CSV not found: {csv_path}"}, indent=2))
+            return 1
+
+        from .prediction_artifact_adapter import convert_predictions_csv_to_model_outputs
+        result = convert_predictions_csv_to_model_outputs(csv_path, top_k=top_k)
+
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(result, f, indent=2)
+
+        print(json.dumps({
+            "status": "success",
+            "message": f"Successfully converted predictions CSV '{csv_path}' to model outputs JSON '{out_path}' containing {len(result)} records.",
+            "records_count": len(result)
+        }, indent=2))
+        return 0
+    except Exception as e:
+        output = {
+            "status": "error",
+            "message": f"Conversion failed: {e}"
+        }
+        print(json.dumps(output, indent=2), file=sys.stderr)
+        return 1
+
+
 def main() -> None:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -215,6 +255,27 @@ def main() -> None:
         help="If specified, do not restrict evaluation to visual candidates."
     )
 
+    # Convert predictions subcommand
+    convert_parser = subparsers.add_parser("convert-predictions", help="Convert predictions CSV to model-output JSON list.")
+    convert_parser.add_argument(
+        "--predictions-csv",
+        type=str,
+        required=True,
+        help="Path to the predictions.csv file."
+    )
+    convert_parser.add_argument(
+        "--output-json",
+        type=str,
+        required=True,
+        help="Path to write the output model JSON list."
+    )
+    convert_parser.add_argument(
+        "--top-k",
+        type=int,
+        default=5,
+        help="Maximum top visual candidates to extract (default: 5)."
+    )
+
     args = parser.parse_args()
 
     if args.command == "validate":
@@ -223,6 +284,8 @@ def main() -> None:
         sys.exit(run_reason(args))
     elif args.command == "integrate":
         sys.exit(run_integrate(args))
+    elif args.command == "convert-predictions":
+        sys.exit(run_convert_predictions(args))
 
 
 if __name__ == "__main__":

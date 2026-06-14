@@ -1,0 +1,27 @@
+{
+  "image_id": "casent0789101_profile",
+  "view_type": "profile",
+  "visual_candidates": [
+    {
+      "taxon_id": "solenopsis",
+      "scientific_name": "Solenopsis",
+      "score": 0.90,
+      "rank": 1
+    },
+    {
+      "taxon_id": "crematogaster",
+      "scientific_name": "Crematogaster",
+      "score": 0.05,
+      "rank": 2
+    }
+  ],
+  "observed_traits": {
+    "postpetiole_attachment": "dorsal_surface_first_gastral_segment",
+    "gaster_shape_dorsal": "heart_shaped",
+    "petiole_node_state": "no_node_dorsoventrally_flattened"
+  },
+  "metadata": {
+    "model_version": "v2_efficientnet_b4",
+    "evaluation_timestamp": "2026-06-14T12:00:00Z"
+  }
+}

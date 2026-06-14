@@ -11,6 +11,7 @@ import sys
 import os
 from .kb_loader import load_kb
 from .key_reasoner import reason_over_traits
+from .reasoning_adapter import build_reasoning_evidence_packet
 
 
 def run_validate(args) -> int:
@@ -105,6 +106,53 @@ def run_reason(args) -> int:
         return 1
 
 
+def run_integrate(args) -> int:
+    """Runs the prediction-KB reasoning integration subcommand."""
+    try:
+        kb_dir = args.kb_dir
+        model_file = args.model_output
+
+        if not kb_dir:
+            print(json.dumps({"status": "error", "message": "KB directory path is required."}, indent=2))
+            return 1
+
+        if not model_file:
+            print(json.dumps({"status": "error", "message": "Model output file path is required."}, indent=2))
+            return 1
+
+        if not os.path.exists(model_file):
+            print(json.dumps({"status": "error", "message": f"Model output file not found: {model_file}"}, indent=2))
+            return 1
+
+        # Load model output
+        try:
+            with open(model_file, "r", encoding="utf-8") as f:
+                model_output = json.load(f)
+        except Exception as e:
+            print(json.dumps({"status": "error", "message": f"Failed to parse model output JSON: {e}"}, indent=2))
+            return 1
+
+        # Determine filter setting
+        candidate_taxa_from_visual = not args.no_candidate_filter
+
+        # Run integration adapter
+        result = build_reasoning_evidence_packet(
+            kb_dir_or_dict=kb_dir,
+            model_output=model_output,
+            candidate_taxa_from_visual=candidate_taxa_from_visual
+        )
+
+        print(json.dumps(result, indent=2))
+        return 0
+    except Exception as e:
+        output = {
+            "status": "error",
+            "message": f"Integration failed: {e}"
+        }
+        print(json.dumps(output, indent=2), file=sys.stderr)
+        return 1
+
+
 def main() -> None:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -147,12 +195,34 @@ def main() -> None:
         help="Optional current image view (e.g., 'head', 'profile', 'dorsal') to prioritize missing traits."
     )
 
+    # Integrate subcommand
+    integrate_parser = subparsers.add_parser("integrate", help="Integrate model predictions with KB reasoning.")
+    integrate_parser.add_argument(
+        "--kb-dir",
+        type=str,
+        required=True,
+        help="Path to the taxonomic KB directory."
+    )
+    integrate_parser.add_argument(
+        "--model-output",
+        type=str,
+        required=True,
+        help="Path to a JSON file containing model visual predictions and observed traits."
+    )
+    integrate_parser.add_argument(
+        "--no-candidate-filter",
+        action="store_true",
+        help="If specified, do not restrict evaluation to visual candidates."
+    )
+
     args = parser.parse_args()
 
     if args.command == "validate":
         sys.exit(run_validate(args))
     elif args.command == "reason":
         sys.exit(run_reason(args))
+    elif args.command == "integrate":
+        sys.exit(run_integrate(args))
 
 
 if __name__ == "__main__":

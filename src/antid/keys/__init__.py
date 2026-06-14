@@ -17,6 +17,11 @@ from .key_consistency_evaluator import (
     load_observed_traits_sidecar,
     evaluate_predictions_csv_with_kb,
 )
+from .trait_sidecar_tools import (
+    validate_observed_traits_sidecar,
+    summarize_trait_sidecar_coverage,
+    generate_trait_annotation_template,
+)
 
 __all__ = [
     "load_kb",
@@ -31,4 +36,7 @@ __all__ = [
     "convert_predictions_csv_to_model_outputs",
     "load_observed_traits_sidecar",
     "evaluate_predictions_csv_with_kb",
+    "validate_observed_traits_sidecar",
+    "summarize_trait_sidecar_coverage",
+    "generate_trait_annotation_template",
 ]

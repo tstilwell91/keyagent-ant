@@ -255,6 +255,121 @@ def run_evaluate_key_consistency(args) -> int:
         return 1
 
 
+def run_validate_traits(args) -> int:
+    """Runs the trait sidecar validation subcommand."""
+    try:
+        kb_dir = args.kb_dir
+        observed_traits = args.observed_traits
+
+        if not kb_dir:
+            print(json.dumps({"status": "error", "message": "KB directory path is required."}, indent=2))
+            return 1
+        if not observed_traits:
+            print(json.dumps({"status": "error", "message": "Observed traits file path is required."}, indent=2))
+            return 1
+
+        if not os.path.isdir(kb_dir):
+            print(json.dumps({"status": "error", "message": f"KB directory does not exist: {kb_dir}"}, indent=2))
+            return 1
+        if not os.path.exists(observed_traits):
+            print(json.dumps({"status": "error", "message": f"Observed traits file not found: {observed_traits}"}, indent=2))
+            return 1
+
+        from .trait_sidecar_tools import validate_observed_traits_sidecar
+        result = validate_observed_traits_sidecar(kb_dir, observed_traits)
+        print(json.dumps(result, indent=2))
+        return 0 if result["status"] == "success" else 1
+    except Exception as e:
+        output = {
+            "status": "error",
+            "message": f"Trait validation failed: {e}"
+        }
+        print(json.dumps(output, indent=2), file=sys.stderr)
+        return 1
+
+
+def run_summarize_traits(args) -> int:
+    """Runs the trait sidecar coverage summarization subcommand."""
+    try:
+        kb_dir = args.kb_dir
+        observed_traits = args.observed_traits
+
+        if not kb_dir:
+            print(json.dumps({"status": "error", "message": "KB directory path is required."}, indent=2))
+            return 1
+        if not observed_traits:
+            print(json.dumps({"status": "error", "message": "Observed traits file path is required."}, indent=2))
+            return 1
+
+        if not os.path.isdir(kb_dir):
+            print(json.dumps({"status": "error", "message": f"KB directory does not exist: {kb_dir}"}, indent=2))
+            return 1
+        if not os.path.exists(observed_traits):
+            print(json.dumps({"status": "error", "message": f"Observed traits file not found: {observed_traits}"}, indent=2))
+            return 1
+
+        from .trait_sidecar_tools import summarize_trait_sidecar_coverage
+        result = summarize_trait_sidecar_coverage(kb_dir, observed_traits)
+        print(json.dumps(result, indent=2))
+        return 0
+    except Exception as e:
+        output = {
+            "status": "error",
+            "message": f"Trait summarization failed: {e}"
+        }
+        print(json.dumps(output, indent=2), file=sys.stderr)
+        return 1
+
+
+def run_generate_trait_template(args) -> int:
+    """Runs the blank trait annotation template generation subcommand."""
+    try:
+        predictions_csv = args.predictions_csv
+        output_jsonl = args.output_jsonl
+        max_records = args.max_records
+
+        if not predictions_csv:
+            print(json.dumps({"status": "error", "message": "Predictions CSV path is required."}, indent=2))
+            return 1
+        if not output_jsonl:
+            print(json.dumps({"status": "error", "message": "Output JSONL path is required."}, indent=2))
+            return 1
+
+        if not os.path.exists(predictions_csv):
+            print(json.dumps({"status": "error", "message": f"Predictions CSV file not found: {predictions_csv}"}, indent=2))
+            return 1
+
+        from .trait_sidecar_tools import generate_trait_annotation_template
+        generate_trait_annotation_template(
+            predictions_csv=predictions_csv,
+            output_jsonl=output_jsonl,
+            max_records=max_records,
+            include_empty_traits=not args.no_empty_traits
+        )
+
+        # Count generated lines
+        records_count = 0
+        if os.path.exists(output_jsonl):
+            with open(output_jsonl, "r", encoding="utf-8") as f:
+                records_count = sum(1 for _ in f)
+
+        output = {
+            "status": "success",
+            "message": f"Successfully generated blank trait annotation template with {records_count} records.",
+            "output_file": output_jsonl,
+            "records_count": records_count
+        }
+        print(json.dumps(output, indent=2))
+        return 0
+    except Exception as e:
+        output = {
+            "status": "error",
+            "message": f"Template generation failed: {e}"
+        }
+        print(json.dumps(output, indent=2), file=sys.stderr)
+        return 1
+
+
 def main() -> None:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -375,6 +490,61 @@ def main() -> None:
         help="If specified, do not restrict evaluation to visual candidates."
     )
 
+    # Validate traits sidecar subcommand
+    validate_traits_parser = subparsers.add_parser("validate-traits", help="Validate observed traits sidecar file.")
+    validate_traits_parser.add_argument(
+        "--kb-dir",
+        type=str,
+        required=True,
+        help="Path to the taxonomic KB directory."
+    )
+    validate_traits_parser.add_argument(
+        "--observed-traits",
+        type=str,
+        required=True,
+        help="Path to the JSON/JSONL observed physical traits sidecar file."
+    )
+
+    # Summarize traits subcommand
+    summarize_traits_parser = subparsers.add_parser("summarize-traits", help="Summarize coverage of observed traits sidecar.")
+    summarize_traits_parser.add_argument(
+        "--kb-dir",
+        type=str,
+        required=True,
+        help="Path to the taxonomic KB directory."
+    )
+    summarize_traits_parser.add_argument(
+        "--observed-traits",
+        type=str,
+        required=True,
+        help="Path to the JSON/JSONL observed physical traits sidecar file."
+    )
+
+    # Generate trait template subcommand
+    gen_template_parser = subparsers.add_parser("generate-trait-template", help="Generate blank trait annotation template JSONL from predictions CSV.")
+    gen_template_parser.add_argument(
+        "--predictions-csv",
+        type=str,
+        required=True,
+        help="Path to the predictions.csv file."
+    )
+    gen_template_parser.add_argument(
+        "--output-jsonl",
+        type=str,
+        required=True,
+        help="Path to write the blank JSONL template."
+    )
+    gen_template_parser.add_argument(
+        "--max-records",
+        type=int,
+        help="Optional maximum number of records to write."
+    )
+    gen_template_parser.add_argument(
+        "--no-empty-traits",
+        action="store_true",
+        help="If specified, do not output empty observed_traits object."
+    )
+
     args = parser.parse_args()
 
     if args.command == "validate":
@@ -387,6 +557,12 @@ def main() -> None:
         sys.exit(run_convert_predictions(args))
     elif args.command == "evaluate-key-consistency":
         sys.exit(run_evaluate_key_consistency(args))
+    elif args.command == "validate-traits":
+        sys.exit(run_validate_traits(args))
+    elif args.command == "summarize-traits":
+        sys.exit(run_summarize_traits(args))
+    elif args.command == "generate-trait-template":
+        sys.exit(run_generate_trait_template(args))
 
 
 if __name__ == "__main__":

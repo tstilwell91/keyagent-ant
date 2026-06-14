@@ -172,7 +172,7 @@ def validate_dataset(manifest_path: str, image_root: str = None) -> bool:
         if len(errors) > 50:
             logger.error(f"  - ... and {len(errors) - 50} more errors")
     else:
-        logger.info("Manifest CSV syntax, fields, and file existence checks are 100% valid.")
+        logger.info("Manifest CSV syntax, fields, and file existence checks passed validation.")
 
     # Always report counts
     print("\n" + "=" * 40)

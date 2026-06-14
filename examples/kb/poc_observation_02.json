@@ -1,0 +1,9 @@
+{
+  "postpetiole_attachment": "anterior_face_first_gastral_segment",
+  "gaster_shape_dorsal": "not_heart_shaped",
+  "petiole_node_state": "node_present_or_not_flattened",
+  "antenna_segment_count": "10",
+  "antennal_scrobe_position": "absent_or_not_below_eye",
+  "antenna_club_segments": "2",
+  "spongiform_tissue_petiole_postpetiole": "absent"
+}

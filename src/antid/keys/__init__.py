@@ -13,6 +13,10 @@ from .prediction_artifact_adapter import (
     load_predictions_csv,
     convert_predictions_csv_to_model_outputs,
 )
+from .key_consistency_evaluator import (
+    load_observed_traits_sidecar,
+    evaluate_predictions_csv_with_kb,
+)
 
 __all__ = [
     "load_kb",
@@ -25,4 +29,6 @@ __all__ = [
     "prediction_row_to_model_output",
     "load_predictions_csv",
     "convert_predictions_csv_to_model_outputs",
+    "load_observed_traits_sidecar",
+    "evaluate_predictions_csv_with_kb",
 ]

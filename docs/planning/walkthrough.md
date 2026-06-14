@@ -243,72 +243,103 @@ The third milestone introduces a formatting and mapping boundary layer to parse 
 
 ---
 
-## 5. Expanded Unit & Integration Test Suite
+## 5. Taxonomic Key-Consistency Batch Evaluation Harness
 
-We expanded our unit and integration test suite to include the `prediction_artifact_adapter`. All 30 tests pass successfully:
+The fourth milestone introduces the batch evaluation harness (`key_consistency_evaluator.py`), which evaluates consistency across a set of model predictions and observed traits.
+
+### A. Key Technical Achievements
+
+1. **Dual Physical Traits Sidecar Parsing**:
+   - Safely parses observed physical traits from standard JSON maps (dictionaries) as well as line-by-line JSONL streams.
+   - Robustly verifies type structures and handles malformed or single-line records cleanly.
+
+2. **Graceful Out-of-Scope Handling**:
+   - Implements per-row defensive recovery. If a CNN model predicts a candidate that does not exist in the Taxonomic KB registry, the evaluator catches the downstream `ValueError`.
+   - Instead of terminating evaluation, it generates a fallback/unresolved evidence packet and assigns an appropriate unresolved status (e.g., `insufficient_trait_evidence` if no observations exist, or `visual_top_unresolved_by_key`).
+
+3. **Consolidated Metric Aggregation**:
+   - Aggregates overall agreement statuses, rates, missing traits frequency, and active rule conflicts into a clean, unified report format.
+
+### B. Advanced Refinements & Rationale
+
+To ensure that key-consistency statistics accurately reflect biological agreement rather than random or default overlaps, several refined metrics and evaluation safeguards have been introduced:
+
+1. **Meaningful Evidence Rate (`meaningful_evidence_records` & `meaningful_evidence_rate`)**
+   - **`meaningful_evidence_records`**: `total_records - status_counts["insufficient_trait_evidence"]`
+   - **`meaningful_evidence_rate`**: `meaningful_evidence_records / total_records` (0.0 if total_records is 0)
+   - **Rationale**: This separates records where the system actually had usable trait evidence to evaluate against the Taxonomic KB from records where the system honestly reported insufficient evidence (e.g., because of missing sidecar entries or fully unobserved physical features). Tracking this allows developers to assess physical trait reporting coverage independently of model accuracy.
+
+2. **Refined Visual/Key Top Agreement Counting (Excluding Insufficient Evidence)**
+   - **Rationale**: We explicitly exclude records with `insufficient_trait_evidence` status from the `visual_key_top_agreement_count`. The count only includes records where:
+     - `status != "insufficient_trait_evidence"`
+     - `key_top_taxon_id` is not None
+     - `visual_top_taxon_id == key_top_taxon_id`
+   - **Why Exclude Insufficient Evidence?**: This avoids treating default/no-evidence rankings or tie-breakers as genuine biological agreement. If there is no trait evidence, any overlap between the model's top prediction and the key reasoner's top-ranked candidate is purely a random coincidental artifact of empty/default scoring, rather than meaningful taxonomic validation.
+
+3. **Separate Out-of-Scope Visual Candidate Tracking**
+   - **Rationale**: Standard model predictions may output taxa that are outside the scope of the current local taxonomic KB, resulting in `ValueError` during candidate registration checks.
+   - **Tracking Strategy**: Rather than crashing the batch evaluation or masking these failures as standard taxonomic key conflicts, we catch candidate registration errors gracefully on a per-row basis:
+     - We increment `out_of_scope_candidate_records` and calculate `out_of_scope_candidate_rate`.
+     - For fallback packets, we inject a clear `"evaluator_warning"` field containing structured debugging information:
+       ```json
+       "evaluator_warning": {
+         "type": "out_of_scope_visual_candidate",
+         "message": "Visual candidate is out of scope or unregistered...",
+         "raw_error": "..."
+       }
+       ```
+     - This separates registry-mismatch/out-of-scope issues from genuine biological key conflicts (where a taxon *is* registered but the physical traits disagree with the taxonomic rules).
+
+---
+
+## 6. Comprehensive Test Suite Execution
+
+We expanded our unit and integration test suite to cover all milestones. All 83 tests pass successfully:
 
 ```bash
 PYTHONPATH=src .venv/bin/pytest -v
 ```
 
 ```text
-============================= test session starts ==============================
-platform darwin -- Python 3.12.8, pytest-9.1.0, pluggy-1.6.0
-collected 30 items
-
-tests/test_kb_loader.py::test_get_couplet_base_id PASSED                 [  3%]
-tests/test_kb_loader.py::test_valid_kb_loading PASSED                    [  6%]
-tests/test_kb_loader.py::test_missing_required_file PASSED               [ 10%]
-tests/test_kb_loader.py::test_invalid_source_id_rule PASSED              [ 13%]
-tests/test_kb_loader.py::test_invalid_operator PASSED                    [ 16%]
-tests/test_kb_loader.py::test_mutual_exclusion_both PASSED               [ 20%]
-tests/test_kb_loader.py::test_mutual_exclusion_neither PASSED            [ 23%]
-tests/test_duplicate_trait_id PASSED                                     [ 26%]
-tests/test_kb_loader.py::test_unreachable_couplet PASSED                 [ 30%]
-tests/test_kb_loader.py::test_cyclic_couplet_path PASSED                 [ 33%]
-tests/test_kb_loader.py::test_unknown_next_couplet_reference PASSED      [ 36%]
-tests/test_key_reasoner.py::test_resolve_candidate_taxa PASSED           [ 40%]
-tests/test_key_reasoner.py::test_evaluate_rule_operators PASSED          [ 43%]
-tests/test_key_reasoner.py::test_deterministic_scoring_crematogaster PASSED [ 46%]
-tests/test_key_reasoner.py::test_missing_and_unknown_traits PASSED       [ 50%]
-tests/test_key_reasoner.py::test_recommended_next_action_and_limitations PASSED [ 53%]
-tests/test_reasoning_adapter.py::test_schema_validations PASSED          [ 56%]
-tests/test_reasoning_adapter.py::test_adapter_missing_required_fields PASSED [ 60%]
-tests/test_reasoning_adapter.py::test_adapter_insufficient_evidence PASSED [ 63%]
-tests/test_reasoning_adapter.py::test_adapter_visual_top_supported PASSED [ 66%]
-tests/test_reasoning_adapter.py::test_adapter_visual_top_conflicts PASSED [ 70%]
-tests/test_reasoning_adapter.py::test_adapter_key_prefers_different PASSED [ 73%]
-tests/test_reasoning_adapter.py::test_deterministic_tie_breaking PASSED  [ 76%]
-tests/test_reasoning_adapter.py::test_cli_integration_subcommand PASSED  [ 80%]
-tests/test_prediction_artifact_adapter.py::test_classify_label_formatting_heuristic PASSED [ 83%]
-tests/test_prediction_artifact_adapter.py::test_prediction_row_to_model_output_scenarios PASSED [ 86%]
-tests/test_prediction_artifact_adapter.py::test_load_predictions_csv PASSED [ 90%]
-tests/test_prediction_artifact_adapter.py::test_convert_predictions_csv_to_model_outputs PASSED [ 93%]
-tests/test_prediction_artifact_adapter.py::test_cli_convert_predictions_subcommand PASSED [ 96%]
-tests/test_prediction_artifact_adapter.py::test_predictions_to_reasoning_integration PASSED [100%]
-
-============================== 30 passed in 0.09s = 0.09s ==============================
+============================== 83 passed in 0.26s ==============================
 ```
 
 ---
 
-## 6. Actual CLI Verification of Predictions Subcommand
+## 7. Actual CLI Verification of Consistency Evaluation Subcommand
 
-We successfully validated the conversion command on the mock predictions CSV dataset.
+The batch consistency evaluator was executed over the mock predictions dataset and sidecar trait observations.
 
 ### Execution Command
 ```bash
-PYTHONPATH=src .venv/bin/python -m antid.keys.cli convert-predictions \
+PYTHONPATH=src .venv/bin/python -m antid.keys.cli evaluate-key-consistency \
+  --kb-dir data/kb/poc_myrmicinae_mem \
   --predictions-csv examples/kb/mock_predictions.csv \
-  --output-json examples/kb/mock_model_outputs_from_predictions.json \
+  --observed-traits examples/kb/mock_observed_traits.json \
+  --output-json examples/kb/mock_key_consistency_eval.json \
   --top-k 3
 ```
 
-### Command Output
+### Subcommand Output Summary
 ```json
 {
   "status": "success",
-  "message": "Successfully converted predictions CSV 'examples/kb/mock_predictions.csv' to model outputs JSON 'examples/kb/mock_model_outputs_from_predictions.json' containing 3 records.",
-  "records_count": 3
+  "records_count": 3,
+  "status_counts": {
+    "insufficient_trait_evidence": 1,
+    "visual_top_conflicts_with_key": 1,
+    "visual_top_tied_for_key_top": 0,
+    "visual_top_supported_by_key": 1,
+    "visual_top_unresolved_by_key": 0,
+    "key_prefers_different_taxon": 0
+  },
+  "support_rate": 0.3333333333333333,
+  "conflict_rate": 0.3333333333333333,
+  "insufficient_trait_evidence_rate": 0.3333333333333333,
+  "meaningful_evidence_records": 2,
+  "meaningful_evidence_rate": 0.6666666666666666,
+  "out_of_scope_candidate_records": 1,
+  "out_of_scope_candidate_rate": 0.3333333333333333
 }
 ```
+The consolidated JSON report was successfully generated at `examples/kb/mock_key_consistency_eval.json`.

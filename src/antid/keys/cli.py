@@ -193,6 +193,68 @@ def run_convert_predictions(args) -> int:
         return 1
 
 
+def run_evaluate_key_consistency(args) -> int:
+    """Runs the batch key-consistency evaluation subcommand."""
+    try:
+        kb_dir = args.kb_dir
+        predictions_csv = args.predictions_csv
+        observed_traits = args.observed_traits
+        output_json = args.output_json
+        top_k = args.top_k or 5
+
+        if not kb_dir:
+            print(json.dumps({"status": "error", "message": "KB directory path is required."}, indent=2))
+            return 1
+        if not predictions_csv:
+            print(json.dumps({"status": "error", "message": "Predictions CSV path is required."}, indent=2))
+            return 1
+        if not output_json:
+            print(json.dumps({"status": "error", "message": "Output JSON path is required."}, indent=2))
+            return 1
+
+        if not os.path.isdir(kb_dir):
+            print(json.dumps({"status": "error", "message": f"KB directory does not exist: {kb_dir}"}, indent=2))
+            return 1
+        if not os.path.exists(predictions_csv):
+            print(json.dumps({"status": "error", "message": f"Predictions CSV file not found: {predictions_csv}"}, indent=2))
+            return 1
+
+        from .key_consistency_evaluator import evaluate_predictions_csv_with_kb
+        result = evaluate_predictions_csv_with_kb(
+            kb_dir=kb_dir,
+            predictions_csv=predictions_csv,
+            top_k=top_k,
+            observed_traits_path=observed_traits,
+            candidate_taxa_from_visual=not args.no_candidate_filter
+        )
+
+        with open(output_json, "w", encoding="utf-8") as f:
+            json.dump(result, f, indent=2)
+
+        summary = result["summary"]
+        stdout_payload = {
+            "status": "success",
+            "records_count": summary["total_records"],
+            "status_counts": summary["status_counts"],
+            "support_rate": summary["support_rate"],
+            "conflict_rate": summary["conflict_rate"],
+            "insufficient_trait_evidence_rate": summary["insufficient_trait_evidence_rate"],
+            "meaningful_evidence_records": summary["meaningful_evidence_records"],
+            "meaningful_evidence_rate": summary["meaningful_evidence_rate"],
+            "out_of_scope_candidate_records": summary["out_of_scope_candidate_records"],
+            "out_of_scope_candidate_rate": summary["out_of_scope_candidate_rate"]
+        }
+        print(json.dumps(stdout_payload, indent=2))
+        return 0
+    except Exception as e:
+        output = {
+            "status": "error",
+            "message": f"Key-consistency evaluation failed: {e}"
+        }
+        print(json.dumps(output, indent=2), file=sys.stderr)
+        return 1
+
+
 def main() -> None:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -276,6 +338,43 @@ def main() -> None:
         help="Maximum top visual candidates to extract (default: 5)."
     )
 
+    # Evaluate key-consistency subcommand
+    eval_parser = subparsers.add_parser("evaluate-key-consistency", help="Run batch taxonomic consistency evaluation.")
+    eval_parser.add_argument(
+        "--kb-dir",
+        type=str,
+        required=True,
+        help="Path to the taxonomic KB directory."
+    )
+    eval_parser.add_argument(
+        "--predictions-csv",
+        type=str,
+        required=True,
+        help="Path to the predictions.csv file."
+    )
+    eval_parser.add_argument(
+        "--observed-traits",
+        type=str,
+        help="Optional path to observed physical traits JSON/JSONL sidecar file."
+    )
+    eval_parser.add_argument(
+        "--output-json",
+        type=str,
+        required=True,
+        help="Path to write the full evaluation results JSON."
+    )
+    eval_parser.add_argument(
+        "--top-k",
+        type=int,
+        default=5,
+        help="Maximum top visual candidates to extract per row (default: 5)."
+    )
+    eval_parser.add_argument(
+        "--no-candidate-filter",
+        action="store_true",
+        help="If specified, do not restrict evaluation to visual candidates."
+    )
+
     args = parser.parse_args()
 
     if args.command == "validate":
@@ -286,6 +385,8 @@ def main() -> None:
         sys.exit(run_integrate(args))
     elif args.command == "convert-predictions":
         sys.exit(run_convert_predictions(args))
+    elif args.command == "evaluate-key-consistency":
+        sys.exit(run_evaluate_key_consistency(args))
 
 
 if __name__ == "__main__":

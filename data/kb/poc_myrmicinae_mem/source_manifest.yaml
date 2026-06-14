@@ -1,0 +1,16 @@
+source_id: mem_myrmicinae_genera_se_us
+name: "Key to MYRMICINAE Genera in the southeastern United States"
+publisher: "Mississippi Entomological Museum"
+author: "Joe MacGown"
+source_url: "https://mississippientomologicalmuseum.org.msstate.edu/Researchtaxapages/Formicidaepages/Myrmicinaekeys/Myrmicinekey.html"
+adapted_from: "Bolton 1994"
+taxonomic_scope: "Myrmicinae"
+rank_scope: "genus"
+geographic_scope: "southeastern United States"
+caste_scope: "not explicitly normalized in this POC"
+extraction_scope: "Couplets 1 through 6 only"
+validation_status: "needs_human_review"
+notes:
+  - "This POC encodes only structured trait assertions from the first six couplets."
+  - "Source text is not copied wholesale; source line references are retained for audit."
+  - "Do not apply this key globally without checking geographic and taxonomic scope."

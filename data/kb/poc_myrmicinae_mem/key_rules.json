@@ -1,0 +1,191 @@
+{
+  "source_id": "mem_myrmicinae_genera_se_us",
+  "rules": [
+    {
+      "rule_id": "mem_myrmicinae_001a",
+      "couplet": "1a",
+      "parent_couplet": null,
+      "source_lines": "25-27",
+      "conditions": [
+        {"trait_id": "postpetiole_attachment", "operator": "equals", "value": "dorsal_surface_first_gastral_segment"},
+        {"trait_id": "gaster_shape_dorsal", "operator": "equals", "value": "heart_shaped"},
+        {"trait_id": "petiole_node_state", "operator": "equals", "value": "no_node_dorsoventrally_flattened"}
+      ],
+      "terminal_taxon_id": "crematogaster",
+      "next_couplet": null,
+      "required_views": ["dorsal", "profile"],
+      "body_regions": ["postpetiole", "gaster", "petiole"],
+      "validation_status": "needs_human_review"
+    },
+    {
+      "rule_id": "mem_myrmicinae_001b",
+      "couplet": "1b",
+      "parent_couplet": null,
+      "source_lines": "29-31",
+      "conditions": [
+        {"trait_id": "postpetiole_attachment", "operator": "equals", "value": "anterior_face_first_gastral_segment"},
+        {"trait_id": "gaster_shape_dorsal", "operator": "equals", "value": "not_heart_shaped"},
+        {"trait_id": "petiole_node_state", "operator": "equals", "value": "node_present_or_not_flattened"}
+      ],
+      "terminal_taxon_id": null,
+      "next_couplet": "2",
+      "required_views": ["dorsal", "profile"],
+      "body_regions": ["postpetiole", "gaster", "petiole"],
+      "validation_status": "needs_human_review"
+    },
+    {
+      "rule_id": "mem_myrmicinae_002a",
+      "couplet": "2a",
+      "parent_couplet": "1b",
+      "source_lines": "32-34",
+      "conditions": [
+        {"trait_id": "antenna_segment_count", "operator": "equals", "value": "7"},
+        {"trait_id": "antennal_scrobe_position", "operator": "equals", "value": "present_below_eye"}
+      ],
+      "terminal_taxon_id": "eurhopalothrix_floridana",
+      "next_couplet": null,
+      "required_views": ["head", "profile"],
+      "body_regions": ["antenna", "head"],
+      "validation_status": "needs_human_review"
+    },
+    {
+      "rule_id": "mem_myrmicinae_002b",
+      "couplet": "2b",
+      "parent_couplet": "1b",
+      "source_lines": "36-38",
+      "conditions": [
+        {"trait_id": "antenna_segment_count", "operator": "not_equals", "value": "7"},
+        {"trait_id": "antennal_scrobe_position", "operator": "equals", "value": "absent_or_not_below_eye"}
+      ],
+      "terminal_taxon_id": null,
+      "next_couplet": "3",
+      "required_views": ["head", "profile"],
+      "body_regions": ["antenna", "head"],
+      "validation_status": "needs_human_review"
+    },
+    {
+      "rule_id": "mem_myrmicinae_003a",
+      "couplet": "3a",
+      "parent_couplet": "2b",
+      "source_lines": "40-44",
+      "conditions": [
+        {"trait_id": "antenna_club_segments", "operator": "equals", "value": "2"}
+      ],
+      "terminal_taxon_id": null,
+      "next_couplet": "4",
+      "required_views": ["head"],
+      "body_regions": ["antenna"],
+      "validation_status": "needs_human_review"
+    },
+    {
+      "rule_id": "mem_myrmicinae_003b",
+      "couplet": "3b",
+      "parent_couplet": "2b",
+      "source_lines": "46-48",
+      "conditions": [
+        {"trait_id": "antenna_club_segments", "operator": "equals", "value": "3_or_more"}
+      ],
+      "terminal_taxon_id": null,
+      "next_couplet": "7",
+      "required_views": ["head"],
+      "body_regions": ["antenna"],
+      "validation_status": "needs_human_review"
+    },
+    {
+      "rule_id": "mem_myrmicinae_004a",
+      "couplet": "4a",
+      "parent_couplet": "3a",
+      "source_lines": "49-51",
+      "conditions": [
+        {"trait_id": "antenna_segment_count", "operator": "equals", "value": "4_to_6"},
+        {"trait_id": "spongiform_tissue_petiole_postpetiole", "operator": "equals", "value": "present"}
+      ],
+      "terminal_taxon_id": "strumigenys",
+      "next_couplet": null,
+      "required_views": ["head", "profile"],
+      "body_regions": ["antenna", "petiole", "postpetiole"],
+      "validation_status": "needs_human_review"
+    },
+    {
+      "rule_id": "mem_myrmicinae_004b",
+      "couplet": "4b",
+      "parent_couplet": "3a",
+      "source_lines": "53-55",
+      "conditions": [
+        {"trait_id": "antenna_segment_count", "operator": "equals", "value": "9_to_11"},
+        {"trait_id": "spongiform_tissue_petiole_postpetiole", "operator": "equals", "value": "absent"}
+      ],
+      "terminal_taxon_id": null,
+      "next_couplet": "5",
+      "required_views": ["head", "profile"],
+      "body_regions": ["antenna", "petiole", "postpetiole"],
+      "validation_status": "needs_human_review"
+    },
+    {
+      "rule_id": "mem_myrmicinae_005a",
+      "couplet": "5a",
+      "parent_couplet": "4b",
+      "source_lines": "57-59",
+      "conditions": [
+        {"trait_id": "frontal_carinae_state", "operator": "equals", "value": "present_near_occipital_margin"},
+        {"trait_id": "antennal_scrobe_position", "operator": "equals", "value": "broad_shallow_present"},
+        {"trait_id": "clypeus_longitudinal_carinae", "operator": "equals", "value": "absent_pair"},
+        {"trait_id": "propodeal_armament", "operator": "equals", "value": "long_spines_pair"}
+      ],
+      "terminal_taxon_id": "wasmannia_auropunctata",
+      "next_couplet": null,
+      "required_views": ["head", "profile"],
+      "body_regions": ["head", "clypeus", "propodeum"],
+      "validation_status": "needs_human_review"
+    },
+    {
+      "rule_id": "mem_myrmicinae_005b",
+      "couplet": "5b",
+      "parent_couplet": "4b",
+      "source_lines": "60-62",
+      "conditions": [
+        {"trait_id": "frontal_carinae_state", "operator": "equals", "value": "absent"},
+        {"trait_id": "antennal_scrobe_position", "operator": "equals", "value": "absent"},
+        {"trait_id": "clypeus_longitudinal_carinae", "operator": "equals", "value": "present_pair_medial_or_lateral"},
+        {"trait_id": "propodeal_armament", "operator": "equals", "value": "unarmed"}
+      ],
+      "terminal_taxon_id": null,
+      "next_couplet": "6",
+      "required_views": ["head", "profile"],
+      "body_regions": ["head", "clypeus", "propodeum"],
+      "validation_status": "needs_human_review"
+    },
+    {
+      "rule_id": "mem_myrmicinae_006a",
+      "couplet": "6a",
+      "parent_couplet": "5b",
+      "source_lines": "64-68",
+      "conditions": [
+        {"trait_id": "petiole_node_state", "operator": "equals", "value": "subsessile_node_weak"},
+        {"trait_id": "mandible_tooth_count", "operator": "equals", "value": "5_or_6"},
+        {"trait_id": "antenna_segment_count", "operator": "equals", "value": "11"}
+      ],
+      "terminal_taxon_id": "xenomyrmex",
+      "next_couplet": null,
+      "required_views": ["profile", "head"],
+      "body_regions": ["petiole", "mandible", "antenna"],
+      "validation_status": "needs_human_review"
+    },
+    {
+      "rule_id": "mem_myrmicinae_006b",
+      "couplet": "6b",
+      "parent_couplet": "5b",
+      "source_lines": "70-72",
+      "conditions": [
+        {"trait_id": "petiole_node_state", "operator": "equals", "value": "obvious_node_with_peduncle"},
+        {"trait_id": "mandible_tooth_count", "operator": "equals", "value": "4"},
+        {"trait_id": "antenna_segment_count", "operator": "equals", "value": "10"}
+      ],
+      "terminal_taxon_id": "solenopsis",
+      "next_couplet": null,
+      "required_views": ["profile", "head"],
+      "body_regions": ["petiole", "mandible", "antenna"],
+      "validation_status": "needs_human_review"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+taxa:
+  - taxon_id: crematogaster
+    scientific_name: Crematogaster
+    rank: genus
+    source_status: terminal_in_poc_key
+    validation_status: needs_human_review
+
+  - taxon_id: eurhopalothrix_floridana
+    scientific_name: Eurhopalothrix floridana
+    rank: species
+    source_status: terminal_in_poc_key
+    validation_status: needs_human_review
+
+  - taxon_id: strumigenys
+    scientific_name: Strumigenys
+    rank: genus
+    source_status: terminal_in_poc_key
+    validation_status: needs_human_review
+
+  - taxon_id: wasmannia_auropunctata
+    scientific_name: Wasmannia auropunctata
+    rank: species
+    source_status: terminal_in_poc_key
+    validation_status: needs_human_review
+
+  - taxon_id: xenomyrmex
+    scientific_name: Xenomyrmex
+    rank: genus
+    source_status: terminal_in_poc_key
+    validation_status: needs_human_review
+
+  - taxon_id: solenopsis
+    scientific_name: Solenopsis
+    rank: genus
+    source_status: terminal_in_poc_key
+    validation_status: needs_human_review
